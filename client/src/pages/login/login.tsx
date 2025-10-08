@@ -6,16 +6,17 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import axios from "axios";
 
 type FormData = {
-  username: string
+  email: string
   password: string
 }
 
 const LoginForm = () => {
   const navigate = useNavigate()
   const [formData, setFormData] = useState<FormData>({
-    username: "",
+    email : "",
     password: "",
   })
 
@@ -31,29 +32,27 @@ const LoginForm = () => {
     }))
   }
 
-  async function callSignUpAPI(formData: FormData) {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      return { status: "success" }
-    } catch (error) {
-      setError("Đăng nhập thất bại!")
-      throw error
-    }
-  }
+
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setIsLoading(true)
   
-    navigate("/homePage");
     try {
-      const result = await callSignUpAPI(formData)
-      if (result.status === "success") {
-        console.log("Login successful!")
+      const res = await axios.post("http://localhost:3000/melody/auth/login", formData);  
+      const data = res.data
+      if (data.success === false) {
+        setError("Tên đăng nhập hoặc mật khẩu không đúng!")
+        setIsLoading(false)
+        return
+      }else if (data.success === true) {
+        setError("")
+        localStorage.setItem("token", data.data.token);
+        navigate("/homePage");
       }
     } catch (error) {
-      console.error("Login failed:", error)
+      setError("Đăng nhập thất bại!")
+      throw error
     } finally {
       setIsLoading(false)
     }
@@ -95,14 +94,14 @@ const LoginForm = () => {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-semibold text-foreground">
+                  <label htmlFor="email" className="text-sm font-semibold text-foreground">
                     Tên đăng nhập
                   </label>
                   <Input
-                    id="username"
-                    name="username"
+                    id="email"
+                    name="email"
                     type="text"
-                    value={formData.username}
+                    value={formData.email}
                     onChange={handleChange}
                     placeholder="Nhập tên đăng nhập của bạn"
                     className="h-12 border-2 border-border bg-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-base"

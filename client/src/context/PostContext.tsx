@@ -1,8 +1,9 @@
 
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import type Comment from '../fomat/type/Comment'
 import type Post from '../fomat/type/Post'
 import type { PostContextType } from '../fomat/type/PostContextType'
+import axios from "axios"
 
 
 
@@ -18,7 +19,7 @@ const initialPosts: Post[] = [
   {
     id: "1",
     userId: "user1",
-    username: "TienDat",
+    fullname: "TienDat",
     avatar: "./src/assets/ruaBien.png",
     image: "./src/assets/ruaBien.png",
     caption: "Cảnh đẹp hôm nay! 🌅 #sunrise #nature",
@@ -30,7 +31,7 @@ const initialPosts: Post[] = [
   {
     id: "2",
     userId: "user2",
-    username: "MINH BEO OFFICAL",
+    fullname: "MINH BEO OFFICAL",
     avatar: "./src/assets/romanWarrior.jpg",
     image: "./src/assets/nuochoaMinhBeo.jpg",
     caption: "NUOC HOA MINH BEO",
@@ -42,7 +43,7 @@ const initialPosts: Post[] = [
   {
     id: "3",
     userId: "user3",
-    username: "TienDat Vu",
+    fullname: "TienDat Vu",
     avatar: "./src/assets/romanWarrior.jpg",
     image: "./src/assets/hinh-avatar-cute-nu.webp",
     caption: "Thành phố về đêm ✨ #citylife #night",
@@ -58,7 +59,7 @@ const initialComments: Record<string, Comment[]> = {
     {
       id: "c1",
       userId: "user2",
-      username: "tranthibinh",
+      fullname: "tranthibinh",
       text: "Đẹp quá!",
       time: "1 giờ trước",
       likes: 1,
@@ -67,7 +68,7 @@ const initialComments: Record<string, Comment[]> = {
         {
           id: "r1",
           userId: "user1",
-          username: "nguyenvanan",
+          fullname: "nguyenvanan",
           text: "Cảm ơn bạn!",
           time: "45 phút trước",
           likes: 1,
@@ -76,7 +77,7 @@ const initialComments: Record<string, Comment[]> = {
         }, {
           id: "r2",
           userId: "user1",
-          username: "namcuong",
+          fullname: "namcuong",
           text: "Cảm ơn bạn!",
           time: "45 phút trước",
           likes: 1,
@@ -88,7 +89,7 @@ const initialComments: Record<string, Comment[]> = {
     {
       id: "c2",
       userId: "user3",
-      username: "leminhcuong",
+      fullname: "leminhcuong",
       text: "Chụp ở đâu vậy bạn?",
       time: "30 phút trước",
       likes: 1,
@@ -97,11 +98,11 @@ const initialComments: Record<string, Comment[]> = {
     },
   ],
   "2": [
-    { id: "c3", userId: "user1", username: "nguyenvanan", text: "Nhìn ngon ghê!", time: "2 giờ trước", likes: 1, isLiked: true, replies: [] },
+    { id: "c3", userId: "user1", fullname: "nguyenvanan", text: "Nhìn ngon ghê!", time: "2 giờ trước", likes: 1, isLiked: true, replies: [] },
     {
       id: "c4",
       userId: "user3",
-      username: "leminhcuong",
+      fullname: "leminhcuong",
       text: "Công thức chia sẻ được không?",
       time: "1 giờ trước",
       likes: 1,
@@ -109,7 +110,7 @@ const initialComments: Record<string, Comment[]> = {
       replies: [{
         id: "r8",
         userId: "user1",
-        username: "nguyen",
+        fullname: "nguyen",
         text: "Cảm ơn bạn!",
         time: "45 phút trước",
         likes: 1,
@@ -122,7 +123,7 @@ const initialComments: Record<string, Comment[]> = {
     {
       id: "c5",
       userId: "user1",
-      username: "nguyenvanan",
+      fullname: "nguyenvanan",
       text: "Góc chụp tuyệt vời!",
       time: "3 giờ trước",
       likes: 1,
@@ -139,6 +140,35 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
   const [comments, setComments] = useState<Record<string, Comment[]>>(initialComments)
   // luu tru theo dang string: id cua bai viet
   //              comment[] : danh sach comment cua bai viet do
+
+
+useEffect(() => {
+  const fetchPosts = async () => {
+    try {
+      // 🔹 Lấy token từ localStorage
+      const token = localStorage.getItem("token");
+      console.log("Token:", token);
+      // 🔹 Gọi API kèm header Authorization
+      const response = await axios.get("http://localhost:3000/melody/post/get-posts", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data: Post[] = response.data.data;
+      setPosts(data);
+    } catch (err) {
+      console.error("Lỗi khi tải bài viết:", err);
+    }
+  };
+
+  fetchPosts();
+}, []); // ❌ KHÔNG nên để [posts.length] vì sẽ tạo vòng lặp vô hạn
+
+
+
+
+
   const updateCommentCount = (postId: string, newCount: number) => {
     setPosts((prevPosts) => prevPosts.map((post) => (post.id === postId ? { ...post, commentCount: newCount } : post)))
   }
@@ -171,7 +201,6 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
     return comments[postId] || []
   }
   const updateLikePost = (postId: String) => {
-
     setPosts(posts =>
       posts.map(post =>
         post.id === postId

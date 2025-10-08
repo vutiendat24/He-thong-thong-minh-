@@ -24,16 +24,16 @@ export default function CommentItem({
       {/* Avatar */}
       <div className="h-8 w-8 rounded-full bg-gray-300 overflow-hidden flex items-center justify-center">
         {comment.avatar ? (
-          <img src={comment.avatar} alt={comment.username} className="w-full h-full object-cover" />
+          <img src={comment.avatar} alt={comment.fullname} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-sm font-bold">{comment.username.toUpperCase()}</span>
+          <span className="text-sm font-bold">{comment.fullname.toUpperCase()}</span>
         )}
       </div>
 
       {/* Nội dung comment */}
       <div className="flex-1 flex flex-col justify-start items-start">
         <p className={`text-sm break-all ${expanded ? "" : "line-clamp-2"}`}>
-          <span className="font-semibold text-start">{comment.username}</span> {comment.text}
+          <span className="font-semibold text-start">{comment.fullname}</span> {comment.text}
         </p>
 
         {/* Nút "Xem thêm / Thu gọn" */}
@@ -57,7 +57,7 @@ export default function CommentItem({
                 isReply: true,
                 parrentComment: comment.id,
                 replyingTo: comment.userId,
-                replyToUsername: comment.username,
+                replyTofullname: comment.fullname,
                 replyText: "",
               })
             }
@@ -73,11 +73,11 @@ export default function CommentItem({
               <div key={reply.id} className="flex gap-3">
                 <Avatar className="w-6 h-6">
                   <AvatarImage src={reply.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{reply.username[0].toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{reply.fullname[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <p className="text-sm">
-                    <span className="font-semibold">{reply.username}</span> {reply.text}
+                    <span className="font-semibold">{reply.fullname}</span> {reply.text}
                   </p>
                   <div className="flex items-center gap-4 mt-1">
                     <p className="text-xs text-muted-foreground">{reply.time}</p>
@@ -87,7 +87,7 @@ export default function CommentItem({
                           isReply: true,
                           replyingTo: reply.id,
                           replyText: "",
-                          replyToUsername: reply.username,
+                          replyTofullname: reply.fullname,
                           parrentComment: comment.id,
                         })
                       }

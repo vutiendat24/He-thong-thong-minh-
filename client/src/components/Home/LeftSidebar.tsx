@@ -27,7 +27,7 @@ export default function LeftSidebar({ currentPage, onNavigate }: LeftSidebarProp
   return (
     <div className="w-16 lg:w-56 xl:w-64 2xl:w-72 border-r border-gray-200 flex flex-col fixed h-full z-10 bg-white transition-all duration-300">
       <div className="p-3 lg:p-6">
-        <h1 className="text-2xl font-bold hidden lg:block">Melody Media</h1>
+        <h1 className="text-2xl font-bold font-[Cookie] hidden lg:block">Melody Media</h1>
         <div className="lg:hidden flex justify-center">
           <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">IG</span>

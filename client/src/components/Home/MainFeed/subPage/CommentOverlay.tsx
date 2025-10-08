@@ -23,7 +23,7 @@ export type ReplyState = {
   isReply: boolean
   replyingTo: string | null
   replyText: string | null
-  replyToUsername: string | null
+  replyTofullname: string | null
   parrentComment: string | null
 }
 
@@ -36,7 +36,7 @@ export default function CommentsOverlay({
   const createEmptyComment = (): Comment => ({
     id: "",
     userId: "",
-    username: "",
+    fullname: "",
     avatar: "",
     text: "",
     time: "",
@@ -59,7 +59,7 @@ export default function CommentsOverlay({
     isReply: false,
     replyingTo: null,
     replyText: null,
-    replyToUsername: null,
+    replyTofullname: null,
     parrentComment: null,
   })
 
@@ -103,7 +103,7 @@ export default function CommentsOverlay({
         <div className="bg-black flex items-center aspect-square max-w-[50vw] justify-center border-r-5 border-black">
           <img
             src={post.image || "/placeholder.svg"}
-            alt={`Post by ${post.username}`}
+            alt={`Post by ${post.fullname}`}
             className="w-full h-full object-cover"
           />
         </div>
@@ -115,11 +115,11 @@ export default function CommentsOverlay({
             <div className="flex items-start gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={post.avatar || "/placeholder.svg"} />
-                <AvatarFallback>{post.username[0].toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{post.fullname[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <p className="text-sm">
-                  <span className="font-semibold">{post.username}</span> {post.caption}
+                  <span className="font-semibold">{post.fullname}</span> {post.caption}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{post.time}</p>
               </div>
@@ -154,9 +154,9 @@ export default function CommentsOverlay({
                 <div className="flex flex-row">
                   <p>
                     Đang trả lời{" "}
-                    {replyState.replyToUsername !== null ? (
+                    {replyState.replyTofullname !== null ? (
                       <span className="inline-block text-blue-400 text-xl">
-                        {replyState.replyToUsername}
+                        {replyState.replyTofullname}
                       </span>
                     ) : (
                       ""
@@ -166,8 +166,8 @@ export default function CommentsOverlay({
                 <div className="flex">
                   <Input
                     placeholder={
-                      replyState.replyToUsername !== null
-                        ? "Trả lời " + replyState.replyToUsername
+                      replyState.replyTofullname !== null
+                        ? "Trả lời " + replyState.replyTofullname
                         : ""
                     }
                     value={newComment?.text}
@@ -175,7 +175,7 @@ export default function CommentsOverlay({
                       setNewComment({
                         id: uuidv4(),
                         userId: "Tien Dat",
-                        username: "ddd",
+                        fullname: "ddd",
                         avatar: "",
                         text: e.target.value,
                         time: "10/5",
@@ -237,7 +237,7 @@ export default function CommentsOverlay({
                     setNewComment({
                       id: String(post.commentCount + 1),
                       userId: "Tien Dat",
-                      username: "ddd",
+                      fullname: "ddd",
                       avatar: "",
                       text: e.target.value,
                       time: "10/5",

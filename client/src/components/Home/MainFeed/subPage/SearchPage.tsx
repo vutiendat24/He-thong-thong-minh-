@@ -23,7 +23,7 @@ const mockPosts = [
 const mockUsers = [
   {
     id: 1,
-    username: "nguyenvan_a",
+    fullname: "nguyenvan_a",
     name: "Nguyễn Văn A",
     followers: "12.5k",
     avatar: "/thoughtful-man.png",
@@ -31,7 +31,7 @@ const mockUsers = [
   },
   {
     id: 2,
-    username: "thithib",
+    fullname: "thithib",
     name: "Thị Thị B",
     followers: "8.2k",
     avatar: "/thoughtful-woman.png",
@@ -39,7 +39,7 @@ const mockUsers = [
   },
   {
     id: 3,
-    username: "photographer_c",
+    fullname: "photographer_c",
     name: "Photographer C",
     followers: "45.1k",
     avatar: "/photographer.png",
@@ -47,7 +47,7 @@ const mockUsers = [
   },
   {
     id: 4,
-    username: "foodie_d",
+    fullname: "foodie_d",
     name: "Food Lover D",
     followers: "23.7k",
     avatar: "/diverse-chef-preparing-food.png",
@@ -172,12 +172,12 @@ export default function InstagramSearch() {
                           <Card key={user.id} className="p-3 hover:bg-accent/50 transition-colors cursor-pointer">
                             <div className="flex items-center gap-3">
                               <Avatar className="h-12 w-12">
-                                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.username} />
+                                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.fullname} />
                                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1">
-                                  <p className="font-medium truncate">{user.username}</p>
+                                  <p className="font-medium truncate">{user.fullname}</p>
                                   {user.verified && (
                                     <div className="h-4 w-4 bg-primary rounded-full flex items-center justify-center">
                                       <div className="h-2 w-2 bg-primary-foreground rounded-full"></div>
@@ -233,12 +233,12 @@ export default function InstagramSearch() {
                       <Card key={user.id} className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-16 w-16">
-                            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.username} />
+                            <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.fullname} />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">{user.username}</p>
+                              <p className="font-medium truncate">{user.fullname}</p>
                               {user.verified && (
                                 <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center">
                                   <div className="h-2.5 w-2.5 bg-primary-foreground rounded-full"></div>
