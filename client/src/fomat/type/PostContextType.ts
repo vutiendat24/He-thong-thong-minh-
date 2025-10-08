@@ -14,4 +14,5 @@ export type PostContextType = {
     updateLikePost : (postId: string ) => void,
     getIsLogin: () => boolean,
     setIsUserLogin : (status: boolean) => void,
+    getPostById: (postID: string) => Post | undefined,
 }
