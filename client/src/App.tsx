@@ -12,7 +12,7 @@ import MessagePage from '../src/pages/MessagePage'
 
 
 
-function App() {
+function  App() {
   return (
   
       <Routes>
