@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { connectDB } = require('./config/MongooseConf.js');
+const connectDB  = require('./config/MongooseConf.js');
 const melodyRouter = require('./routes/melody/MelodyRoute.js');
 
 connectDB();
