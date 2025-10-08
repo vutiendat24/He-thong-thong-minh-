@@ -148,7 +148,7 @@ useEffect(() => {
       // 🔹 Lấy token từ localStorage
       const token = localStorage.getItem("token");
       console.log("Token:", token);
-      // 🔹 Gọi API kèm header Authorization
+      // 🔹 Gọi API kèm JWT token 
       const response = await axios.get("http://localhost:3000/melody/post/get-posts", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -163,12 +163,14 @@ useEffect(() => {
   };
 
   fetchPosts();
-}, []); // ❌ KHÔNG nên để [posts.length] vì sẽ tạo vòng lặp vô hạn
+}, []);  
 
 
 
 
-
+  const getPostById = (postID: string): Post | undefined => {
+    return posts.find((post) => post.id === postID)
+  }
   const updateCommentCount = (postId: string, newCount: number) => {
     setPosts((prevPosts) => prevPosts.map((post) => (post.id === postId ? { ...post, commentCount: newCount } : post)))
   }
@@ -231,6 +233,7 @@ useEffect(() => {
     addComment,
     addReply,
     getComments,
+    getPostById,
     updateLikeComment,
     updateLikePost,
     getIsLogin,

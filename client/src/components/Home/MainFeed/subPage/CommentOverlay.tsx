@@ -112,7 +112,7 @@ export default function CommentsOverlay({
         <div className="max-w-[40vw] flex flex-col">
           {/* Caption */}
           <div className="p-4 border-b">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start flex-1 gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={post.avatar || "/placeholder.svg"} />
                 <AvatarFallback>{post.fullname[0].toUpperCase()}</AvatarFallback>
