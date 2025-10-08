@@ -7,7 +7,7 @@ export default function RightSidebar() {
   // Mock data for suggested users
   const suggestedUsers = Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
-    username: `suggested_user${i + 1}`,
+    fullname: `suggested_user${i + 1}`,
     avatar: "./src/assets/SpatanWarrior.jpg",
     mutualFriends: Math.floor(Math.random() * 50) + 1,
   }))
@@ -43,10 +43,10 @@ export default function RightSidebar() {
                 <div key={user.id} className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                    <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{user.fullname[0].toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{user.username}</p>
+                    <p className="font-semibold text-sm truncate">{user.fullname}</p>
                     <p className="text-xs text-gray-500">{user.mutualFriends} bạn chung</p>
                   </div>
                   <Button size="sm" className="text-xs text-red-400 font-semibold h-8 px-3 xl:px-4 shrink-0">

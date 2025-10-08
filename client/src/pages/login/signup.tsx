@@ -56,10 +56,17 @@ const SignUpForm = () => {
     }
 
     try {
-      // chưa viết api để lưu thông tin đăng ký cua người dùng
+      const response = await axios.post(
+        "http://localhost:3000/melody/auth/sign-up",formData)  
+      const data = response.data
+      if (data.succes === "error") {
+        setError(data.message || "Đã có lỗi xảy ra. Vui lòng thử lại.")
+        setIsLoading(false)
+        alert("Đăng ký that bai")
+        return
+      }
 
-      // tạm thoi se tu cho chuyen huong den trang dang nhap 
-      navigate("/login")
+      navigate("/")
 
 
 
@@ -134,6 +141,7 @@ const SignUpForm = () => {
               required
             />
           </div>
+          
 
           <div className="space-y-2">
             <label className="block text-sm font-medium text-foreground">Mật khẩu</label>

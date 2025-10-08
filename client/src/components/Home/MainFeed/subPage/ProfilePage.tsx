@@ -16,7 +16,7 @@ export default function ProfilePage() {
                         <AvatarFallback>U</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                        <h2 className="text-xl font-semibold mb-2">username</h2>
+                        <h2 className="text-xl font-semibold mb-2">fullname</h2>
                         <div className="flex gap-6 text-sm">
                             <span>
                                 <strong>123</strong> bài viết

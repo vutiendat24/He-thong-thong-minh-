@@ -54,7 +54,7 @@ export default function HomePage() {
                                         <AvatarImage src={post.avatar || "/placeholder.svg"} />
                                     </Avatar>
                                     <div className="flex-1 text-start text-2xl ">
-                                        <p className="font-semibold ">{post.username}</p>
+                                        <p className="font-semibold ">{post.fullname}</p>
                                         <p className="text-xl text-gray-500">{post.time}</p>
                                     </div>
                                     <Button variant="ghost" size="sm">
@@ -66,7 +66,7 @@ export default function HomePage() {
                                 <div className="aspect-square bg-gray-100">
                                     <img
                                         src={post.image || "/placeholder.svg"}
-                                        alt={`Post by ${post.username}`}
+                                        alt={`Post by ${post.fullname}`}
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
@@ -95,7 +95,7 @@ export default function HomePage() {
                                     </div>
 
                                     <p className="text-start text-sm">
-                                        <span className="font-semibold">{post.username}</span> {post.caption}
+                                        <span className="font-semibold">{post.fullname}</span> {post.caption}
                                     </p>
                                     <button
                                         className="text-sm text-gray-500 mt-1 hover:text-gray-700"
