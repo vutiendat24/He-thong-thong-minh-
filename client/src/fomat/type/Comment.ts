@@ -12,3 +12,18 @@ export default interface Comment {
   parentId?: string // For reply comments
   replies?: Comment[] // Child replies
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -120,7 +120,7 @@ const CreatePost: React.FC = () => {
                 className="text-xs px-2 py-1 rounded-md bg-slate-100 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="public">🌍 Công khai</option>
-                <option value="friends">👥 Bạn bè</option>
+                <option value="friend">👥 Bạn bè</option>
                 <option value="private">🔒 Chỉ mình tôi</option>
               </select>
             </div>

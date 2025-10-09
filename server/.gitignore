@@ -12,6 +12,9 @@ dist-ssr
 *.local
 .env
 src/test/*
+
+routes/tesst.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
