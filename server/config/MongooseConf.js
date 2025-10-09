@@ -10,4 +10,4 @@ const connectDB = async () => {
   }
 }
 
-module.exports = {connectDB, mongoose}
+module.exports = { connectDB, mongoose }
