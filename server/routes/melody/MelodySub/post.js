@@ -62,7 +62,7 @@ PostRouter.get("/get-posts",verifyToken,  async (req, res) => {
     }
 
     // 2️⃣ Lấy tất cả lượt like (để kiểm tra người dùng hiện tại đã like chưa)
-    const likes = await Like.find();
+    const likes = await Like.find({userId: currentUserId});
 
     // 3️⃣ Chuyển dữ liệu sang format chuẩn
     const formattedPosts = await Promise.all(
