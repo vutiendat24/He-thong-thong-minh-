@@ -6,6 +6,7 @@ import type Post  from "./Post";
 export type PostContextType = {
    posts: Post[]
    comments: Record<string, Comment[]>
+   currrenUserId :string
     updateCommentCount: (postId: string, newCount: number) => void
     addComment: (postId: string, comment: Comment) => void
     addReply: (postId: string, parentCommentId: string, reply: Comment) => void
