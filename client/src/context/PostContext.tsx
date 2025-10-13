@@ -18,7 +18,7 @@ export const usePostContext = () => {
 const initialPosts: Post[] = [
   {
     id: "1",
-    userId: "user1",
+    userID: "user1",
     fullname: "TienDat",
     avatar: "./src/assets/ruaBien.png",
     image: "./src/assets/ruaBien.png",
@@ -30,7 +30,7 @@ const initialPosts: Post[] = [
   },
   {
     id: "2",
-    userId: "user2",
+    userID: "user2",
     fullname: "MINH BEO OFFICAL",
     avatar: "./src/assets/romanWarrior.jpg",
     image: "./src/assets/nuochoaMinhBeo.jpg",
@@ -42,7 +42,7 @@ const initialPosts: Post[] = [
   },
   {
     id: "3",
-    userId: "user3",
+    userID: "user3",
     fullname: "TienDat Vu",
     avatar: "./src/assets/romanWarrior.jpg",
     image: "./src/assets/hinh-avatar-cute-nu.webp",
@@ -58,7 +58,7 @@ const initialComments: Record<string, Comment[]> = {
   "1": [
     {
       id: "c1",
-      userId: "user2",
+      userID: "user2",
       fullname: "tranthibinh",
       text: "Đẹp quá!",
       time: "1 giờ trước",
@@ -67,7 +67,7 @@ const initialComments: Record<string, Comment[]> = {
       replies: [
         {
           id: "r1",
-          userId: "user1",
+          userID: "user1",
           fullname: "nguyenvanan",
           text: "Cảm ơn bạn!",
           time: "45 phút trước",
@@ -76,7 +76,7 @@ const initialComments: Record<string, Comment[]> = {
           parentId: "c1",
         }, {
           id: "r2",
-          userId: "user1",
+          userID: "user1",
           fullname: "namcuong",
           text: "Cảm ơn bạn!",
           time: "45 phút trước",
@@ -88,7 +88,7 @@ const initialComments: Record<string, Comment[]> = {
     },
     {
       id: "c2",
-      userId: "user3",
+      userID: "user3",
       fullname: "leminhcuong",
       text: "Chụp ở đâu vậy bạn?",
       time: "30 phút trước",
@@ -98,10 +98,10 @@ const initialComments: Record<string, Comment[]> = {
     },
   ],
   "2": [
-    { id: "c3", userId: "user1", fullname: "nguyenvanan", text: "Nhìn ngon ghê!", time: "2 giờ trước", likes: 1, isLiked: true, replies: [] },
+    { id: "c3", userID: "user1", fullname: "nguyenvanan", text: "Nhìn ngon ghê!", time: "2 giờ trước", likes: 1, isLiked: true, replies: [] },
     {
       id: "c4",
-      userId: "user3",
+      userID: "user3",
       fullname: "leminhcuong",
       text: "Công thức chia sẻ được không?",
       time: "1 giờ trước",
@@ -109,7 +109,7 @@ const initialComments: Record<string, Comment[]> = {
       isLiked: true,
       replies: [{
         id: "r8",
-        userId: "user1",
+        userID: "user1",
         fullname: "nguyen",
         text: "Cảm ơn bạn!",
         time: "45 phút trước",
@@ -122,7 +122,7 @@ const initialComments: Record<string, Comment[]> = {
   "3": [
     {
       id: "c5",
-      userId: "user1",
+      userID: "user1",
       fullname: "nguyenvanan",
       text: "Góc chụp tuyệt vời!",
       time: "3 giờ trước",
@@ -141,29 +141,30 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
   // luu tru theo dang string: id cua bai viet
   //              comment[] : danh sach comment cua bai viet do
 
+  const [currrenUserId, setCurrentUserId] = useState("")
 
-useEffect(() => {
-  const fetchPosts = async () => {
-    try {
-      // 🔹 Lấy token từ localStorage
-      const token = localStorage.getItem("token");
-      console.log("Token:", token);
-      // 🔹 Gọi API kèm JWT token 
-      const response = await axios.get("http://localhost:3000/melody/post/get-posts", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        // 🔹 Lấy token từ localStorage
+        const token = localStorage.getItem("token");
+        console.log("Token:", token);
+        // 🔹 Gọi API kèm JWT token 
+        const response = await axios.get("http://localhost:3000/melody/post/get-posts", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const data: Post[] = response.data.data;
-      setPosts(data);
-    } catch (err) {
-      console.error("Lỗi khi tải bài viết:", err);
-    }
-  };
-
-  fetchPosts();
-}, []);  
+        const data: Post[] = response.data.data;
+        setPosts(data);
+      } catch (err) {
+        console.error("Lỗi khi tải bài viết:", err);
+      }
+    };
+    setCurrentUserId(localStorage.getItem("userID") || "")
+    fetchPosts();
+  }, []);
 
 
 
@@ -224,11 +225,12 @@ useEffect(() => {
         )
       }));
     }
-   console.log("da xu ly update like comment")
+    console.log("da xu ly update like comment")
   }
   const postContextValue: PostContextType = {
     posts,
     comments,
+    currrenUserId,
     updateCommentCount,
     addComment,
     addReply,

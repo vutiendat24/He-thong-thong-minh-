@@ -3,7 +3,7 @@
 
 export default interface Post {
   id: string
-  userId: string
+  userID: string
   fullname: string
   avatar?: string
   image: string

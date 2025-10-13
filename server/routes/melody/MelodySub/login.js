@@ -51,6 +51,8 @@ LoginRouter.post('/sign-up', async (req, res) => {
   }
 });
 
+
+// ======= Đăng nhập ======
 LoginRouter.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;

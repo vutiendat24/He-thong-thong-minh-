@@ -35,7 +35,7 @@ export default function CommentsOverlay({
 }: CommentsOverlayProps) {
   const createEmptyComment = (): Comment => ({
     id: "",
-    userId: "",
+    userID: "",
     fullname: "",
     avatar: "",
     text: "",
@@ -174,7 +174,7 @@ export default function CommentsOverlay({
                     onChange={(e) =>
                       setNewComment({
                         id: uuidv4(),
-                        userId: "Tien Dat",
+                        userID: "Tien Dat",
                         fullname: "ddd",
                         avatar: "",
                         text: e.target.value,
@@ -236,7 +236,7 @@ export default function CommentsOverlay({
                   onChange={(e) =>
                     setNewComment({
                       id: String(post.commentCount + 1),
-                      userId: "Tien Dat",
+                      userID: "Tien Dat",
                       fullname: "ddd",
                       avatar: "",
                       text: e.target.value,
