@@ -72,7 +72,7 @@ LoginRouter.post('/login', async (req, res) => {
       userID: user._id
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '3h' });
     const ApiResponse = SuccesAPI('Đăng nhập thành công', { token, userID: user._id });
     res.status(200).json(ApiResponse);
   } catch (err) {

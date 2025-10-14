@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import {usePostContext} from '../../../../context/PostContext'
+import { usePostContext } from '../../../../context/PostContext'
 import CommentsOverlay from "./CommentOverlay"
 
 
-import type Post  from "../../../../fomat/type/Post"
+import type Post from "../../../../fomat/type/Post"
 
 
 
@@ -26,11 +26,8 @@ export default function HomePage() {
     const [selectedPost, setSelectedPost] = useState<Post | null>(null)
     const [isCommentsOpen, setIsCommentsOpen] = useState(false)
 
-    const {posts,addComment,updateLikePost} = usePostContext()
+    const { posts, addComment, updateLikePost } = usePostContext()
 
-    useEffect(()=>{
-        
-    },posts)
     const handleOpenComments = (post: Post) => {
         setSelectedPost(post)
         setIsCommentsOpen(true)
@@ -74,16 +71,16 @@ export default function HomePage() {
                                 {/* Post Actions */}
                                 <div className="p-4">
                                     <div className="flex items-center gap-4 mb-3">
-                                        <Button      size="sm" className="p-0"
-                                         onClick={ ()=> updateLikePost(post.id)}
+                                        <Button size="sm" className="p-0"
+                                            onClick={() => updateLikePost(post.id)}
                                         >
-                                            <Heart size={24} 
-                                                    color={`${post.isLiked === true ? "red" : "black" }`} 
-                                                    fill={`${post.isLiked === true ? "red" : "white" }`}    
+                                            <Heart size={24}
+                                                color={`${post.isLiked === true ? "red" : "black"}`}
+                                                fill={`${post.isLiked === true ? "red" : "white"}`}
                                             />
-                                        </Button>   
+                                        </Button>
                                         <Button variant="ghost" size="sm" className="p-0" onClick={() => handleOpenComments(post)}>
-                                            <MessageCircle size={24} /> 
+                                            <MessageCircle size={24} />
                                         </Button>
                                         <Button variant="ghost" size="sm" className="p-0 ">
                                             <FaShare />
@@ -110,9 +107,9 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <CommentsOverlay 
-                post={selectedPost} 
-                isOpen={isCommentsOpen} 
+            <CommentsOverlay
+                post={selectedPost}
+                isOpen={isCommentsOpen}
                 onClose={handleCloseComments}
                 onUpdateComments={addComment}
             />

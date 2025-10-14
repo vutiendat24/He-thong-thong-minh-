@@ -37,7 +37,15 @@ const LoginForm = () => {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setIsLoading(true)
-  
+//   {
+//     "success": true,
+//     "message": "Đăng nhập thành công",
+//     "status": 200,
+//     "data": {
+//         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOiI2OGU3NWQ2OWU4N2NmMjY3MjRiMzk0OTAiLCJpYXQiOjE3NTk5OTUwNzEsImV4cCI6MTc2MDAwNTg3MX0.rUmq0kLyCLQqGklNCzfL1S0wwVbFB0Hj3v8hvibaEMw",
+//         "userID": "68e75d69e87cf26724b39490"
+//     }
+// }
     try {
       const res = await axios.post("http://localhost:3000/melody/auth/login", formData);  
       const data = res.data
@@ -152,7 +160,7 @@ const LoginForm = () => {
                     Chưa có tài khoản?{" "}
                     <button
                       type="button"
-                      className="text-primary hover:text-primary/80 font-semibold transition-colors duration-200 underline underline-offset-4"
+                      className="text-primary hover:text-primary/80 font-semibold transition-colors text-blue-400 duration-200 underline underline-offset-4"
                       onClick={()=> navigate("/signup")}
                     >
                       Đăng ký ngay

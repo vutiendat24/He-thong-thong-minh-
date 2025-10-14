@@ -142,28 +142,27 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
   //              comment[] : danh sach comment cua bai viet do
 
 
-useEffect(() => {
-  const fetchPosts = async () => {
-    try {
-      // 🔹 Lấy token từ localStorage
-      const token = localStorage.getItem("token");
-      console.log("Token:", token);
-      // 🔹 Gọi API kèm JWT token 
-      const response = await axios.get("http://localhost:3000/melody/post/get-posts", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        // 🔹 Lấy token từ localStorage
+        const token = localStorage.getItem("token");
+        // 🔹 Gọi API kèm JWT token 
+        const response = await axios.get("http://localhost:3000/melody/post/get-posts", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const data: Post[] = response.data.data;
-      setPosts(data);
-    } catch (err) {
-      console.error("Lỗi khi tải bài viết:", err);
-    }
-  };
+        const data: Post[] = response.data.data;
+        setPosts(data);
+      } catch (err) {
+        console.error("Lỗi khi tải bài viết:", err);
+      }
+    };
 
-  fetchPosts();
-}, []);  
+    fetchPosts();
+  }, []);
 
 
 
@@ -224,7 +223,7 @@ useEffect(() => {
         )
       }));
     }
-   console.log("da xu ly update like comment")
+    console.log("da xu ly update like comment")
   }
   const postContextValue: PostContextType = {
     posts,

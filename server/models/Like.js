@@ -1,5 +1,3 @@
-
-// const {mongoose} = require('../config/MongooseConf');
 const mongoose = require('mongoose');
 
 
