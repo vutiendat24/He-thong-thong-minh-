@@ -57,7 +57,7 @@ export default function CommentItem({
               setReplyState({
                 isReply: true,
                 parrentComment: comment.id,
-                replyingTo: comment.userId,
+                replyingTo: comment.userID,
                 replyTofullname: comment.fullname,
                 replyText: "",
               })

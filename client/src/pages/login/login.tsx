@@ -56,6 +56,7 @@ const LoginForm = () => {
       }else if (data.success === true) {
         setError("")
         localStorage.setItem("token", data.data.token);
+        localStorage.setItem("userID",data.data.userID );
         navigate("/homePage");
       }
     } catch (error) {

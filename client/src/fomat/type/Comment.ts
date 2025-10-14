@@ -2,7 +2,7 @@
 
 export default interface Comment {
   id: string
-  userId: string
+  userID: string
   fullname: string
   avatar?: string
   text: string

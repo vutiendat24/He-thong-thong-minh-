@@ -9,7 +9,7 @@ const ErrorCode = {
   },
   INVALID_TOKEN: {
     status: 401,
-    message: "Invalid or expired token"
+    message: "Invalid token"
   },
   TOKEN_EXPIRED: {
     status: 401,
@@ -43,6 +43,10 @@ const ErrorCode = {
     status: 400,
     message: "Email already exists"
   },
+  CAN_NOT_GET_POST_LIST : {
+    status :500,
+    mesage :"Can not get post list"
+  }
 
 
 };

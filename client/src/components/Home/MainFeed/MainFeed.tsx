@@ -26,8 +26,11 @@ export default function MainFeed({ currentPage }: MainFeedProps) {
         return <NotificationsPage />
       case "create":
         return <CreatePage />
-      case "profile":
-        return <ProfilePage />
+      case "profile":{
+        const userID = localStorage.getItem("userID") || ""
+        return <ProfilePage userID = {userID}  />
+      }
+        
       default:
         return <HomePage />
     }

@@ -7,7 +7,7 @@ import axios from 'axios';
 const exploreItemsInit = [
   {
     "id": "68e62d8b53fdebb5154c1d10",
-    "userId": "68e625fd737a630e4d6d6656",
+    "userID": "68e625fd737a630e4d6d6656",
     "fullname": "Vu Tien Dat",
     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759915403/popwoglhpnuug7oqyn86.png",
     "caption": "sadasd",
@@ -19,7 +19,7 @@ const exploreItemsInit = [
   },
   {
     "id": "68e62adfffb358fbacc76f88",
-    "userId": "68e625fd737a630e4d6d6656",
+    "userID": "68e625fd737a630e4d6d6656",
     "fullname": "Vu Tien Dat",
     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759914719/a3gagng8amnxhklxlslj.png",
     "caption": "sss",
@@ -31,7 +31,7 @@ const exploreItemsInit = [
   },
   {
     "id": "68e62a8c1e6a7cc6edce63ff",
-    "userId": "68e6230de6a74cdcadc88bcc",
+    "userID": "68e6230de6a74cdcadc88bcc",
     "fullname": "Ẩn danh",
     "avatar": "",
     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759914635/dbngxumvmzgxe95bilny.png",
@@ -44,7 +44,7 @@ const exploreItemsInit = [
   },
   {
     "id": "68e62615737a630e4d6d665d",
-    "userId": "68e6230de6a74cdcadc88bcc",
+    "userID": "68e6230de6a74cdcadc88bcc",
     "fullname": "Ẩn danh",
     "avatar": "",
     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759913492/njwouuyii00xotfqiugx.png",

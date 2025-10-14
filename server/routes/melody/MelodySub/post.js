@@ -102,12 +102,30 @@ PostRouter.get("/get-posts", verifyToken, async (req, res) => {
     res.status(200).json(ApiRes);
 
   } catch (err) {
-    console.error("❌ Lỗi khi lấy bài viết:", err);
+
     res.status(500).json({ error: err.message });
   }
 });
 
+PostRouter.get("/get-posts/:userId",verifyToken,  async (req, res) => {
+  try {
+    const { userId } = req.params 
 
+    const user = await User.findById(userId).select("fullname avatar")
+
+    const posts = await Post.find({ userID: userId }).sort({ time: -1 }).lean()
+    const formattedPosts = posts.map(post => ({
+      ...post,
+      fullname: user.fullname,
+      avatar: user.avatar,
+    }))
+    const resAPI = SuccesAPI("Lấy danh sách bài viết thành công", formattedPosts)
+    res.status(200).json(resAPI)
+  } catch (err) {
+    const errorResponse = ErrorAPI("CAN_NOT_GET_POST_LIST")
+    res.status(errorResponse.status).json(errorResponse)
+  }
+})
 
 // API tạo bài viết mới
 PostRouter.post("/create-post", verifyToken, async (req, res) => {
@@ -126,7 +144,7 @@ PostRouter.post("/create-post", verifyToken, async (req, res) => {
     await newPost.save()
     res.status(201).json({ message: "Post created successfully", post: newPost })
   } catch (err) {
-    console.error(err)
+  
     res.status(500).json({ error: err.message })
   }
 })

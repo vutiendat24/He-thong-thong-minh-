@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import CommentItem from "./CommentItem"
+import { usePostContext } from "../../../../context/PostContext"
+import type React from "react"
+import type Post from "../../../../fomat/type/Post"
+import type Comment from "../../../../fomat/type/Comment"
+
 import { X, Send, Heart, MessageCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FaShare } from "react-icons/fa"
-import axios from "axios"
-import type React from "react"
-import type Post from "../../../../fomat/type/Post"
-import type Comment from "../../../../fomat/type/Comment"
 
 interface CommentsOverlayProps {
   post: Post | null
@@ -34,7 +35,7 @@ export default function CommentsOverlay({
 }: CommentsOverlayProps) {
   const createEmptyComment = (): Comment => ({
     id: "",
-    userId: "",
+    userID: "",
     fullname: "",
     avatar: "",
     text: "",
@@ -45,11 +46,14 @@ export default function CommentsOverlay({
     replies: [],
   })
 
-  const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState<Comment>(createEmptyComment())
   const [isLikedPost, setIsLikedPost] = useState<boolean>(post?.isLiked ?? false)
   const [commentsCount, setCommentsCount] = useState<number>(post?.commentCount || 0)
-  const [loadingComments, setLoadingComments] = useState<boolean>(false)
+
+  const { getComments, addReply, updateLikePost } = usePostContext()
+
+  // ❌ Bỏ state comments, dùng trực tiếp từ context
+  const comments = post ? getComments(post.id) : []
 
   const [replyState, setReplyState] = useState<ReplyState>({
     isReply: false,
@@ -60,64 +64,42 @@ export default function CommentsOverlay({
   })
 
   useEffect(() => {
-    if (!post) return
-    setIsLikedPost(post.isLiked || false)
-    setCommentsCount(post.commentCount || 0)
-    fetchComments(post.id)
+    if (post) {
+      setCommentsCount(post?.commentCount || 0)
+      setIsLikedPost(post.isLiked || false)
+    }
   }, [post])
 
-  const fetchComments = async (postId: string) => {
-    try {
-      setLoadingComments(true)
-      const token = localStorage.getItem("token")
-      const res = await axios.get(`http://localhost:3000/melody/post/${postId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      // setComments(res.data)
-      onUpdateComments(post?.id, res.data)
-    } catch (err) {
-      console.error("Lỗi khi lấy comment:", err)
-    } finally {
-      setLoadingComments(false)
-    }
-  }
-
-  const postCommentAPI = async (postId: string, comment: Comment, token: string) => {
-    const res = await axios.post(
-      `http://localhost:3000/melody/post/${postId}/add-comment`,
-      comment,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    )
-    return res.data.comment
-  }
-
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newComment?.text.trim() && post) {
-      try {
-        const token = localStorage.getItem("token") || ""
-        await postCommentAPI(post.id, newComment, token)
-        await fetchComments(post.id)
-        setNewComment(createEmptyComment())
-        setCommentsCount((prev) => prev + 1)
-      } catch (err) {
-        console.error("Lỗi gửi bình luận:", err)
-      }
-    }
-  }
-
   if (!isOpen || !post) return null
+
+  const handleSubmitComment = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newComment?.text.trim()) {
+      setCommentsCount(commentsCount + 1)
+      // gọi callback để cập nhật component cha (HomePage)
+      onUpdateComments(post.id, newComment)
+      setNewComment(createEmptyComment()) // reset lại form
+    }
+  }
+
+  const handleSubmitReplyComment = (
+    e: React.FormEvent,
+    postId: string,
+    CommenParrentId: string,
+    replyComment: Comment
+  ): void => {
+    e.preventDefault()
+    if (newComment?.text.trim()) {
+      setCommentsCount(commentsCount + 1)
+      addReply(postId, CommenParrentId, replyComment)
+      setNewComment(createEmptyComment())
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-7xl w-full h-full max-h-[80vh] flex overflow-hidden">
+        {/* Post Image */}
         <div className="bg-black flex items-center aspect-square max-w-[50vw] justify-center border-r-5 border-black">
           <img
             src={post.image || "/placeholder.svg"}
@@ -126,7 +108,9 @@ export default function CommentsOverlay({
           />
         </div>
 
+        {/* Comments Section */}
         <div className="max-w-[40vw] flex flex-col">
+          {/* Caption */}
           <div className="p-4 border-b">
             <div className="flex items-start flex-1 gap-3">
               <Avatar className="h-8 w-8">
@@ -145,69 +129,131 @@ export default function CommentsOverlay({
             </div>
           </div>
 
+          {/* Comments List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {loadingComments ? (
-              <p className="text-center text-gray-500">Đang tải bình luận...</p>
-            ) : comments.length === 0 ? (
-              <p className="text-center text-gray-400">Chưa có bình luận nào</p>
-            ) : (
-              comments.map((comment) => (
-                <CommentItem
-                  key={comment.id || uuidv4()}
-                  postId={post.id}
-                  comment={comment}
-                  replyState={replyState}
-                  setReplyState={setReplyState}
-                />
-              ))
-            )}
+            {comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                postId={post.id}
+                comment={comment}
+                replyState={replyState}
+                setReplyState={setReplyState}
+              />
+            ))}
           </div>
 
-          <form onSubmit={handleSubmitComment} className="p-4 border-t">
-            <div className="flex items-center gap-4 mb-3">
-              <Button
-                size="sm"
-                className="p-0"
-                onClick={() => setIsLikedPost(!isLikedPost)}
-              >
-                <Heart
-                  size={24}
-                  color={isLikedPost ? "red" : "black"}
-                  fill={isLikedPost ? "red" : "white"}
+          {/* Add Comment */}
+          {replyState.isReply ? (
+            <form
+              onSubmit={(e) =>
+                handleSubmitReplyComment(e, post.id, replyState.parrentComment!, newComment!)
+              }
+              className="p-4 border-t"
+            >
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-row">
+                  <p>
+                    Đang trả lời{" "}
+                    {replyState.replyTofullname !== null ? (
+                      <span className="inline-block text-blue-400 text-xl">
+                        {replyState.replyTofullname}
+                      </span>
+                    ) : (
+                      ""
+                    )}
+                  </p>
+                </div>
+                <div className="flex">
+                  <Input
+                    placeholder={
+                      replyState.replyTofullname !== null
+                        ? "Trả lời " + replyState.replyTofullname
+                        : ""
+                    }
+                    value={newComment?.text}
+                    onChange={(e) =>
+                      setNewComment({
+                        id: uuidv4(),
+                        userID: "Tien Dat",
+                        fullname: "ddd",
+                        avatar: "",
+                        text: e.target.value,
+                        time: "10/5",
+                        likes: 0,
+                        isLiked: false,
+                        parentId: replyState.parrentComment!,
+                        replies: [],
+                      })
+                    }
+                    className="flex-1 border-0 focus-visible:ring-0 px-0"
+                  />
+                  <Button type="submit" variant="ghost" size="sm" disabled={!newComment?.text.trim()}>
+                    <Send size={16} />
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setReplyState({
+                        ...replyState,
+                        isReply: false,
+                      })
+                    }
+                    className="bg-red-600 text-amber-950"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmitComment} className="p-4 border-t">
+              <div className="flex items-center gap-4 mb-3">
+                <Button
+                  size="sm"
+                  className="p-0"
+                  onClick={() => {
+                    updateLikePost(post.id)
+                    setIsLikedPost(!isLikedPost)
+                  }}
+                >
+                  <Heart
+                    size={24}
+                    color={isLikedPost === true ? "red" : "black"}
+                    fill={isLikedPost === true ? "red" : "white"}
+                  />
+                </Button>
+                <Button variant="ghost" size="sm" className="p-0">
+                  <MessageCircle size={24} />
+                </Button>
+                <Button variant="ghost" size="sm" className="p-0">
+                  <FaShare />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Thêm bình luận..."
+                  value={newComment?.text}
+                  onChange={(e) =>
+                    setNewComment({
+                      id: String(post.commentCount + 1),
+                      userID: "Tien Dat",
+                      fullname: "ddd",
+                      avatar: "",
+                      text: e.target.value,
+                      time: "10/5",
+                      likes: 0,
+                      isLiked: false,
+                      replies: [],
+                    })
+                  }
+                  className="flex-1 border-0 focus-visible:ring-0 px-0"
                 />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-0">
-                <MessageCircle size={24} />
-              </Button>
-              <Button variant="ghost" size="sm" className="p-0">
-                <FaShare />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Thêm bình luận..."
-                value={newComment?.text}
-                onChange={(e) =>
-                  setNewComment({
-                    id: uuidv4(),
-                    userId: "me",
-                    fullname: "Tôi",
-                    avatar: "",
-                    text: e.target.value,
-                    time: new Date().toLocaleTimeString(),
-                    likes: 0,
-                    isLiked: false,
-                    replies: [],
-                  })
-                }
-                className="flex-1 border-0 focus-visible:ring-0 px-0"
-              />
-              <Button type="submit" variant="ghost" size="sm" disabled={!newComment?.text.trim()}>
-                <Send size={16} />
-              </Button>
-            </div>
-          </form>
+                <Button type="submit" variant="ghost" size="sm" disabled={!newComment?.text.trim()}>
+                  <Send size={16} />
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
