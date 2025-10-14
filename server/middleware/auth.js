@@ -7,9 +7,11 @@ const verifyToken = (req, res, next) => {
   try {
     // lay phan token trong req ra 
     const authHeader = req.headers.authorization
+    console.log(authHeader)
     if (!authHeader || !authHeader.startsWith("Bearer")) {
       const { status } = ErrorCode["INVALID_TOKEN"]
       const respond = ErrorAPI("INVALID_TOKEN")
+      console.log("loi o day")
       return res.status(status).json(respond)
     }
     // token gom 2 phan ten_token va token_key

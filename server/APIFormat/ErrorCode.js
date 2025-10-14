@@ -46,7 +46,12 @@ const ErrorCode = {
   CAN_NOT_GET_POST_LIST : {
     status :500,
     mesage :"Can not get post list"
+  },
+  CAN_NOT_GET_COMMENT_BY_POSTID : {
+    status: 500,
+    message: "CAN NOT GET COMMENT BECAUSE ERROR SERVER"
   }
+
 
 
 };

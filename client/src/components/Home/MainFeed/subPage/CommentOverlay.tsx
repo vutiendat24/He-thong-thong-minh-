@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FaShare } from "react-icons/fa"
+import axios from "axios"
 
 interface CommentsOverlayProps {
   post: Post | null
@@ -46,15 +47,15 @@ export default function CommentsOverlay({
     replies: [],
   })
 
+
+
+
+
+  const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState<Comment>(createEmptyComment())
   const [isLikedPost, setIsLikedPost] = useState<boolean>(post?.isLiked ?? false)
   const [commentsCount, setCommentsCount] = useState<number>(post?.commentCount || 0)
-
-  const { getComments, addReply, updateLikePost } = usePostContext()
-
-  // ❌ Bỏ state comments, dùng trực tiếp từ context
-  const comments = post ? getComments(post.id) : []
-
+  const [loadingComments, setLoadingComments] = useState<boolean>(false)
   const [replyState, setReplyState] = useState<ReplyState>({
     isReply: false,
     replyingTo: null,
@@ -64,37 +65,63 @@ export default function CommentsOverlay({
   })
 
   useEffect(() => {
-    if (post) {
-      setCommentsCount(post?.commentCount || 0)
-      setIsLikedPost(post.isLiked || false)
-    }
+    if (!post) return
+    setIsLikedPost(post.isLiked || false)
+    setCommentsCount(post.commentCount || 0)
+    fetchComments(post.id)
   }, [post])
 
+  const fetchComments = async (postId: string) => {
+    try {
+      setLoadingComments(true)
+      const token = localStorage.getItem("token")
+      const res = await axios.get(`http://localhost:3000/melody/post/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      // setComments(res.data)
+      console.log(res)
+      setComments(res.data.data[postId])
+      console.log(comments)
+      // onUpdateComments(post?.id, res.data)
+    } catch (err) {
+      console.error("Lỗi khi lấy comment:", err)
+    } finally {
+      setLoadingComments(false)
+    }
+  }
+
+  const postCommentAPI = async (postId: string, comment: Comment, token: string) => {
+    const res = await axios.post(
+      `http://localhost:3000/melody/post/${postId}/add-comment`,
+      comment,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+    return res.data
+  }
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newComment?.text.trim() && post) {
+      try {
+        const token = localStorage.getItem("token") || ""
+        await postCommentAPI(post.id, newComment, token)
+        await fetchComments(post.id)
+        setNewComment(createEmptyComment())
+        setCommentsCount((prev) => prev + 1)
+      } catch (err) {
+        console.error("Lỗi gửi bình luận:", err)
+      }
+    }
+  }
+
   if (!isOpen || !post) return null
-
-  const handleSubmitComment = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newComment?.text.trim()) {
-      setCommentsCount(commentsCount + 1)
-      // gọi callback để cập nhật component cha (HomePage)
-      onUpdateComments(post.id, newComment)
-      setNewComment(createEmptyComment()) // reset lại form
-    }
-  }
-
-  const handleSubmitReplyComment = (
-    e: React.FormEvent,
-    postId: string,
-    CommenParrentId: string,
-    replyComment: Comment
-  ): void => {
-    e.preventDefault()
-    if (newComment?.text.trim()) {
-      setCommentsCount(commentsCount + 1)
-      addReply(postId, CommenParrentId, replyComment)
-      setNewComment(createEmptyComment())
-    }
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">

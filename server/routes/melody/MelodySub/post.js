@@ -9,14 +9,13 @@ const Post = require("../../../models/Post.js")
 const Like = require("../../../models/Like.js")
 const Comment = require("../../../models/Comment.js")
 
-const errorCode = require("../../../APIFormat/ErrorCode.js")
-const { ErrorAPI, SuccesAPI } = require("../../../APIFormat/ApiFormat.js")
 const verifyToken = require("../../../middleware/auth.js")
 // Multer để nhận file từ client
 const storage = multer.memoryStorage()
 const upload = multer({ storage })
 
-
+const { SuccesAPI, ErrorAPI } = require("./../../../APIFormat/ApiFormat.js")
+const ErrorCode = require("./../../../APIFormat/ApiFormat.js")
 
 // API upload ảnh lên Cloudinary
 PostRouter.post("/upload-image", upload.single("image"), async (req, res) => {
@@ -54,7 +53,7 @@ const formatTimeAgo = (date) => {
 PostRouter.get("/get-posts", verifyToken, async (req, res) => {
   try {
     // 👉 Giả lập user hiện tại (sau này sẽ lấy từ JWT)
-    const currentUserId = "68e625fd737a630e4d6d6656";
+    const currentUserId = req.user.userID;
 
     // 1️⃣ Lấy tất cả bài viết, sắp xếp mới nhất lên trước
     const posts = await Post.find().sort({ time: -1 });
@@ -102,30 +101,14 @@ PostRouter.get("/get-posts", verifyToken, async (req, res) => {
     res.status(200).json(ApiRes);
 
   } catch (err) {
+    console.error("❌ Lỗi khi lấy bài viết:", err);
+    const errorApi = ErrorAPI("CAN_NOT_GET_COMMENT_BY_POSTID")
 
-    res.status(500).json({ error: err.message });
+    res.status(errorApi.status).json(errorApi);
   }
 });
 
-PostRouter.get("/get-posts/:userId",verifyToken,  async (req, res) => {
-  try {
-    const { userId } = req.params 
 
-    const user = await User.findById(userId).select("fullname avatar")
-
-    const posts = await Post.find({ userID: userId }).sort({ time: -1 }).lean()
-    const formattedPosts = posts.map(post => ({
-      ...post,
-      fullname: user.fullname,
-      avatar: user.avatar,
-    }))
-    const resAPI = SuccesAPI("Lấy danh sách bài viết thành công", formattedPosts)
-    res.status(200).json(resAPI)
-  } catch (err) {
-    const errorResponse = ErrorAPI("CAN_NOT_GET_POST_LIST")
-    res.status(errorResponse.status).json(errorResponse)
-  }
-})
 
 // API tạo bài viết mới
 PostRouter.post("/create-post", verifyToken, async (req, res) => {
@@ -144,7 +127,7 @@ PostRouter.post("/create-post", verifyToken, async (req, res) => {
     await newPost.save()
     res.status(201).json({ message: "Post created successfully", post: newPost })
   } catch (err) {
-  
+    console.error(err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -189,19 +172,63 @@ PostRouter.post("/:postId/add-comment", verifyToken, async (req, res) => {
 //API lấy comment
 PostRouter.get('/:postId', async (req, res) => {
   try {
-    const comments = await Comment.find({ postId: req.params.postId })
-      .populate("userId", "fullname avatar")
-      .sort({ createdAt: 1 });
+    const postId = req.params.postId
+    // Lấy tất cả comment thuộc bài viết đó, bao gồm cả reply
+    const allComments = await Comment.find({ postId })
+      .populate('userId', 'fullname avatar')
+      .sort({ createdAt: 1 })
+      .lean()
 
-    res.json(comments);
+    // Chia ra comment gốc và reply
+    const rootComments = allComments.filter(c => !c.parentId)
+    const replies = allComments.filter(c => c.parentId)
+
+    // Hàm dựng cấu trúc lồng nhau
+    const buildNestedComments = (comment) => {
+      const commentReplies = replies
+        .filter(r => String(r.parentId) === String(comment._id))
+        .map(r => ({
+          id: String(r._id),
+          postId: String(r.postId || postId),
+          userID: r.userId?._id?.toString() || "",
+          fullname: r.userId?.fullname || "",
+          avatar: r.userId?.avatar || "",
+          text: r.text || "",
+          time: r.createdAt,
+          likes: typeof r.likes === 'number' ? r.likes : (Array.isArray(r.likes) ? r.likes.length : 0),
+          isLiked: !!r.isLiked,
+          parentId: r.parentId ? String(r.parentId) : null,
+          replies: [] // chỉ 2 cấp (comment -> reply)
+        }))
+
+      return {
+        id: String(comment._id),
+        postId: String(comment.postId || postId),
+        userID: comment.userId?._id?.toString() || "",
+        fullname: comment.userId?.fullname || "",
+        avatar: comment.userId?.avatar || "",
+        text: comment.text || "",
+        time: comment.createdAt,
+        likes: typeof comment.likes === 'number' ? comment.likes : (Array.isArray(comment.likes) ? comment.likes.length : 0),
+        isLiked: !!comment.isLiked,
+        parentId: null,
+        replies: commentReplies
+      }
+    }
+
+    const structuredComments = rootComments.map(buildNestedComments)
+    const apiRes = SuccesAPI("Lấy thành công danh sách bình luận của bài viết", { [postId]: structuredComments })
+    console.log(postId)
+    res.status(200).json(apiRes)
   } catch (err) {
-    console.error("Error fetching comments:", err);
-    res.status(500).json({ message: "Error fetching comments" });
+    console.error('Error fetching comments:', err)
+    res.status(500).json({ message: 'Error fetching comments' })
   }
 })
 
+
 // 🩷 API Like / Unlike bài viết
-PostRouter.post("/:postId/toggle-like", verifyToken, async (req, res) => {
+PostRouter.post("/:postId/like", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userID; // lấy từ JWT
     const postId = req.params.postId;

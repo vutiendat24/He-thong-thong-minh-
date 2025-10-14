@@ -161,9 +161,6 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
         console.error("Lỗi khi tải bài viết:", err);
       }
     };
-
-    setCurrentUserId(localStorage.getItem("userID") || "")
-
     fetchPosts();
   }, []);
 
@@ -204,7 +201,18 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
   const getComments = (postId: string) => {
     return comments[postId] || []
   }
-  const updateLikePost = (postId: String) => {
+  const updateLikePost = async (postId: String) => {
+
+ 
+    const token = localStorage.getItem("token"); 
+
+      const res = await axios.post(`http://localhost:3000/melody/post/${postId}/like`, {},
+        {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
     setPosts(posts =>
       posts.map(post =>
         post.id === postId
