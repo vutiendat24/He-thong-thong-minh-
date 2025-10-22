@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import CommentsOverlay from './CommentOverlay';
 import type Post from "../../../../fomat/type/Post"
 import { usePostContext } from "../../../../context/PostContext"
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const exploreItemsInit = [
   {
@@ -57,22 +57,33 @@ const exploreItemsInit = [
   }
 ]
 export default function ExplorePage() {
-  const { posts, getPostById, addComment, updateLikePost } = usePostContext()
+  const { posts, getPostById, addComment, handleTokenExpired, updateLikePost } = usePostContext()
   const [exploreItems, setExploreItems] = useState<Post[]>(exploreItemsInit || [])
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
 
-  useEffect(() => {
-    const CallGetExplorePostAPI = async () => {
+  const CallGetExplorePostAPI = async () => {
+    try {
       const Exploredata = await axios.get('http://localhost:3000/melody/explore/get-explore', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+      if (Exploredata.data.status === 401) {
+        handleTokenExpired()
+      }
 
-      console.log("data", Exploredata.data)
       setExploreItems(Exploredata.data.data)
+
+    } catch (err) {
+      const error = err as AxiosError
+      if (error.response?.status === 401) {
+        handleTokenExpired()
+      }
+
     }
+  }
+  useEffect(() => {
     CallGetExplorePostAPI()
   }, [])
   const handleOpenComments = (post: Post) => {
@@ -114,6 +125,7 @@ export default function ExplorePage() {
           isOpen={isCommentsOpen}
           onClose={handleCloseComments}
           onUpdateComments={addComment}
+          updateLikePost={updateLikePost}
         />
       </div>
     </div>

@@ -107,6 +107,63 @@ PostRouter.get("/get-posts", verifyToken, async (req, res) => {
     res.status(errorApi.status).json(errorApi);
   }
 });
+// lay danh sach bai viet cua mot nguoi dung cu the 
+PostRouter.get("/get-posts/:userID", verifyToken, async (req, res) => {
+  try {
+    const currentUserId = req.params.userID;
+    console.log("UserID:", currentUserId);
+    const posts = await Post.find({ userID: currentUserId }).sort({ time: -1 });
+
+    if (!posts || posts.length === 0) {
+      return res.status(200).json(SuccesAPI("Không có bài viết nào", []));
+    }
+
+    //  Lấy tất cả lượt like (để kiểm tra người dùng hiện tại đã like chưa)
+    const likes = await Like.find({ userId: currentUserId });
+
+    //  Chuyển dữ liệu sang format chuẩn
+    const formattedPosts = await Promise.all(
+      posts.map(async (post) => {
+        // Kiểm tra đã like chưa
+        const isLiked = likes.some(
+          (like) =>
+            like.postId.toString() === post._id.toString() &&
+            like.userId.toString() === currentUserId
+        );
+
+        // Lấy thông tin người đăng bài
+        const user = await User.findById(post.userID); // post.userID là string
+        const fullname = user ? user.fullname : "Ẩn danh";
+        const avatar = user ? user.avatar : "";
+
+        // Format bài viết
+        return {
+          id: post._id.toString(),
+          userId: post.userID || null,
+          fullname,
+          avatar,
+          image: post.image || "",
+          caption: post.caption || "",
+          likes: post.likeCount || 0,
+          commentCount: post.commentCount || 0,
+          isLiked,
+          time: formatTimeAgo(post.time),
+          privacy: post.privacy || "public",
+        };
+      })
+    );
+
+    // 4️⃣ Trả kết quả về client
+    const ApiRes = SuccesAPI("Lấy danh sách bài viết thành công", formattedPosts);
+    res.status(200).json(ApiRes);
+
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy bài viết:", err);
+    const errorApi = ErrorAPI("CAN_NOT_GET_COMMENT_BY_POSTID")
+
+    res.status(errorApi.status).json(errorApi);
+  }
+});
 
 
 
@@ -152,10 +209,10 @@ PostRouter.post("/:postId/add-comment", verifyToken, async (req, res) => {
     });
     await newComment.save();
 
-    // ✅ Cập nhật lại số lượng comment trong Post
+    //  Cập nhật lại số lượng comment trong Post
     await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } });
 
-    // ✅ Populate user info để trả về đầy đủ fullname, avatar
+    //  Populate user info để trả về đầy đủ fullname, avatar
     const populatedComment = await newComment.populate("userId", "fullname avatar");
 
     res.status(201).json({
@@ -218,7 +275,7 @@ PostRouter.get('/:postId', async (req, res) => {
 
     const structuredComments = rootComments.map(buildNestedComments)
     const apiRes = SuccesAPI("Lấy thành công danh sách bình luận của bài viết", { [postId]: structuredComments })
-    console.log(postId)
+
     res.status(200).json(apiRes)
   } catch (err) {
     console.error('Error fetching comments:', err)

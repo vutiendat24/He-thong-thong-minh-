@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import axios from "axios";
+import { usePostContext } from "@/context/PostContext";
 
 type FormData = {
   email: string
@@ -19,7 +20,7 @@ const LoginForm = () => {
     email : "",
     password: "",
   })
-
+  
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
@@ -57,7 +58,7 @@ const LoginForm = () => {
         setError("")
         localStorage.setItem("token", data.data.token);
         localStorage.setItem("userID",data.data.userID );
-        navigate("/homePage");
+        navigate("/homePage/home");
       }
     } catch (error) {
       setError("Đăng nhập thất bại!")

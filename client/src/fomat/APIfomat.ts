@@ -1,7 +1,7 @@
 
 export interface ApiResponse<T = any> {
-  status: "success" | "error"
+  status: "true" | "false"
   message: string
   code?: string
-  data: T | null
+  data?: T | null
 }

@@ -1,21 +1,22 @@
 "use client"
 
 import type React from "react"
-
+import type { ApiResponse } from "../../../../fomat/APIfomat"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import CommentsOverlay from "../subPage/CommentOverlay"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type Post from "../../../../fomat/type/Post"
 import { usePostContext } from "@/context/PostContext"
 import type { PersonalInfo } from "../../../../fomat/type/PersonalInfo"
-import axios from "axios"
+import axios, { Axios, AxiosError } from "axios"
+import { useParams } from "react-router-dom"
 import { MessageSquare, Heart, Camera, Eye, Upload, UserPlus, UserMinus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
-export default function ProfilePage({ userID }: { userID: string }) {
-    const { addComment, currrenUserId } = usePostContext()
+export default function ProfilePage() {
+    const { addComment, currrentUserId, updateLikePost, handleTokenExpired } = usePostContext()
     const [isCommentsOpen, setIsCommentsOpen] = useState(false)
     const [selectedPost, setSelectedPost] = useState<Post | null>(null)
     const [posts, setPosts] = useState<Post[]>([])
@@ -25,9 +26,9 @@ export default function ProfilePage({ userID }: { userID: string }) {
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
     const [isFollowing, setIsFollowing] = useState(false)
     const [isFollowLoading, setIsFollowLoading] = useState(false)
-
-    const isOwnProfile = userID === currrenUserId
-
+    const { userID } = useParams<{ userID: string }>()
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const isOwnProfile = userID === currrentUserId
     const handleOpenComment = (post: Post) => {
         setSelectedPost(post)
         setIsCommentsOpen(true)
@@ -37,29 +38,71 @@ export default function ProfilePage({ userID }: { userID: string }) {
         setSelectedPost(null)
         setIsCommentsOpen(false)
     }
+    const handleUploadClick = () => {
+        console.log("Upload clicked - triggering file input")
+        fileInputRef.current?.click()
+    }
+    const uploadToCloudinary = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("image", file);
 
+        const res = await axios.post(
+            "http://localhost:3000/melody/post/upload-image",
+            formData,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+                withCredentials: false,
+            }
+        );
+
+        return res.data.imageUrl; // URL lay tu  Cloudinary tra ve 
+    };
     const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        console.log("doi avatar")
         const file = event.target.files?.[0]
         if (!file) return
 
         try {
             setIsUploadingAvatar(true)
-            const token = localStorage.getItem("token")
-            const formData = new FormData()
-            formData.append("avatar", file)
 
-            const response = await axios.post(`http://localhost:3000/melody/profile/update-avatar/${userID}`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data",
-                },
-            })
+            // Bước 1: Upload lên Cloudinary
+            console.log("Uploading to Cloudinary...")
+            const imgURL = await uploadToCloudinary(file);
+            console.log("Cloudinary URL:", imgURL)
+
+            // Bước 2: Cập nhật avatar trong database
+            const token = localStorage.getItem("token")
+
+            // Gửi JSON thay vì FormData
+            const response = await axios.post(
+                `http://localhost:3000/melody/profile/update-avatar/${userID}`,
+                { avatar: imgURL },  // Gửi object JSON
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",  // Đổi thành JSON
+                    },
+                }
+            )
+
+            console.log("Update avatar response:", response.data)
 
             if (response.data.data.avatar) {
-                setPersonalInfo((prev) => (prev ? { ...prev, avatar: response.data.data.avatar } : null))
+                setPersonalInfo((prev) =>
+                    prev ? { ...prev, avatar: response.data.data.avatar } : null
+                )
+                setIsAvatarDialogOpen(false) // Đóng dialog sau khi thành công
             }
-        } catch (error) {
+        } catch (err) {
+            const error = err as AxiosError
             console.error("Error uploading avatar:", error)
+
+            if (error.response?.status === 401) {
+                handleTokenExpired()
+            } else {
+                // Hiển thị lỗi cho user
+                alert("Không thể cập nhật ảnh đại diện. Vui lòng thử lại!")
+            }
         } finally {
             setIsUploadingAvatar(false)
         }
@@ -71,7 +114,7 @@ export default function ProfilePage({ userID }: { userID: string }) {
             const token = localStorage.getItem("token")
 
             if (isFollowing) {
-                await axios.post(
+                const res = await axios.post(
                     `http://localhost:3000/melody/profile/unfollow/${userID}`,
                     {},
                     {
@@ -80,10 +123,13 @@ export default function ProfilePage({ userID }: { userID: string }) {
                         },
                     },
                 )
+                if (res.data.status === 401) {
+                    handleTokenExpired()
+                }
                 setIsFollowing(false)
                 setPersonalInfo((prev) => (prev ? { ...prev, totalFolower: (prev.totalFolower || 0) - 1 } : null))
             } else {
-                await axios.post(
+                const res = await axios.post(
                     `http://localhost:3000/melody/profile/follow/${userID}`,
                     {},
                     {
@@ -92,6 +138,9 @@ export default function ProfilePage({ userID }: { userID: string }) {
                         },
                     },
                 )
+                if (res.data.status === 401) {
+                    handleTokenExpired()
+                }
                 setIsFollowing(true)
                 setPersonalInfo((prev) => (prev ? { ...prev, totalFolower: (prev.totalFolower || 0) + 1 } : null))
             }
@@ -103,16 +152,24 @@ export default function ProfilePage({ userID }: { userID: string }) {
     }
 
     const getUserInfo = async () => {
-        const token = localStorage.getItem("token")
-        const peronalInfoRes = await axios.get(`http://localhost:3000/melody/profile/get-profile/${userID}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-        setPersonalInfo(peronalInfoRes.data.data)
-        setIsFollowing(peronalInfoRes.data.data.isFollowing || false)
-        console.log("userID", userID)
-        console.log(peronalInfoRes.data.data)
+        try {
+            const token = localStorage.getItem("token")
+            const peronalInfoRes = await axios.get(`http://localhost:3000/melody/profile/get-profile/${userID}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            setPersonalInfo(peronalInfoRes.data.data)
+            setIsFollowing(peronalInfoRes.data.data.isFollowing || false)
+
+        } catch (error) {
+            const err = error as AxiosError<ApiResponse>;
+
+            if (err.response?.status === 401) {
+                handleTokenExpired()
+            }
+        }
+
     }
 
     useEffect(() => {
@@ -125,7 +182,10 @@ export default function ProfilePage({ userID }: { userID: string }) {
                         Authorization: `Bearer ${token}`,
                     },
                 })
-
+                console.log("PostDataRes", PostDataRes)
+                if (PostDataRes.data.status === 401) {
+                    handleTokenExpired()
+                }
                 const postsData = PostDataRes.data.data
                 setPosts(postsData)
             } catch (error) {
@@ -150,36 +210,41 @@ export default function ProfilePage({ userID }: { userID: string }) {
                             </Avatar>
 
                             {isOwnProfile && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button
-                                            className="absolute inline-block bottom-0 right-0 z-10 h-7 w-7    "
-                                            aria-label="Tùy chọn avatar"
-                                        >
-                                            <Camera className="h-5 w-5 " />
-                                        </button>
-                                    </DropdownMenuTrigger>
+                                <>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button
+                                                className="absolute inline-block bottom-0 right-0 z-10 h-7 w-7"
+                                                aria-label="Tùy chọn avatar"
+                                            >
+                                                <Camera className="h-5 w-5" />
+                                            </button>
+                                        </DropdownMenuTrigger>
 
-                                    <DropdownMenuContent align="end" className="w-48">
-                                        <DropdownMenuItem onClick={() => setIsAvatarDialogOpen(true)}>
-                                            <Eye className="h-4 w-4 mr-2" />
-                                            Xem ảnh đại diện
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <label className="cursor-pointer">
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuItem onClick={() => setIsAvatarDialogOpen(true)}>
+                                                <Eye className="h-4 w-4 mr-2" />
+                                                Xem ảnh đại diện
+                                            </DropdownMenuItem>
+
+                                            {/* THAY ĐỔI Ở ĐÂY */}
+                                            <DropdownMenuItem onClick={handleUploadClick} disabled={isUploadingAvatar}>
                                                 <Upload className="h-4 w-4 mr-2" />
-                                                Đổi ảnh đại diện
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={handleAvatarChange}
-                                                    disabled={isUploadingAvatar}
-                                                />
-                                            </label>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                                {isUploadingAvatar ? "Đang tải..." : "Đổi ảnh đại diện"}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {/* Input ẨN bên ngoài DropdownMenu */}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handleAvatarChange}
+                                        disabled={isUploadingAvatar}
+                                    />
+                                </>
                             )}
                         </div>
 
@@ -193,17 +258,17 @@ export default function ProfilePage({ userID }: { userID: string }) {
                                         disabled={isFollowLoading}
                                         variant={isFollowing ? "outline" : "default"}
                                         size="sm"
-                                        className="gap-2"
+                                        className="gap-2 text-red-600"
                                     >
                                         {isFollowing ? (
                                             <>
-                                                <UserMinus className="h-4 w-4" />
-                                                Bỏ theo dõi
+                                                <UserMinus className="h-4 w-4 text-blue-700" />
+                                                <p> Hủy kết bạn  </p>
                                             </>
                                         ) : (
                                             <>
-                                                <UserPlus className="h-4 w-4" />
-                                                Theo dõi
+                                                <UserPlus className="h-4 w-4 text-red-700" />
+                                                Thêm bạn
                                             </>
                                         )}
                                     </Button>
@@ -290,6 +355,7 @@ export default function ProfilePage({ userID }: { userID: string }) {
                     onClose={handleCloseComment}
                     post={selectedPost}
                     onUpdateComments={addComment}
+                    updateLikePost={updateLikePost}
                 />
             )}
         </>

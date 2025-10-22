@@ -50,7 +50,12 @@ export default function LeftSidebar({ currentPage, onNavigate }: LeftSidebarProp
                 onClick={() => {
                   if (item.id === "messages") {
                     navigate("/messages")
-                  } else onNavigate(item.id)
+                  }else if(item.id === "profile" ){
+                    const userID = localStorage.getItem("userID")
+                    navigate(`/homePage/${item.id}/${userID}`)
+                  } else{    
+                      navigate(`/homePage/${item.id}`)
+                  } 
                 }}
               >
                 <Icon size={24} />

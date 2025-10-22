@@ -50,7 +50,17 @@ const ErrorCode = {
   CAN_NOT_GET_COMMENT_BY_POSTID : {
     status: 500,
     message: "CAN NOT GET COMMENT BECAUSE ERROR SERVER"
+  },
+  SEARCH_ERROR : {
+    status: 500,
+    message: "CAN NOT SEARCH DUE TO SERVER ERROR"
+  },
+  UPDATE_PROFILE_ERROR : {
+    status: 500,
+    message: "CAN NOT UPDATE PROFILE DUE TO SERVER ERROR"
   }
+
+
 
 
 

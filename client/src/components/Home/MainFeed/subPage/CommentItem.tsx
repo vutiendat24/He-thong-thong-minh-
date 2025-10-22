@@ -18,7 +18,7 @@ export default function CommentItem({
   setReplyState: React.Dispatch<React.SetStateAction<ReplyState>>
 }) {
   const [expanded, setExpanded] = useState(false)
-  const { updateLikeComment } = usePostContext()
+  const { updateLikeComment, handleTokenExpired } = usePostContext()
 
   return (
     <div className="flex items-start text-start gap-3">

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ImageIcon, Loader2 } from "lucide-react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { usePostContext } from "@/context/PostContext";
+
 
 interface Media {
   url: string; // cai nay de hien thi anh tren giao dien 
@@ -8,13 +10,38 @@ interface Media {
   type: "image" | "video";
   name: string;
 }
-
+type Profile = {
+    "fullname":  string,
+    "avatar":  string,
+}
 const CreatePost: React.FC = () => {
   const [caption, setCaption] = useState<string>("");
   const [privacy, setPrivacy] = useState<string>("public");
   const [uploadedMedia, setUploadedMedia] = useState<Media[]>([]);
   const [isPosting, setIsPosting] = useState<boolean>(false);
+  const [profile, setProfile ]  = useState<Profile>({"fullname":"", "avatar": ""})
 
+  const { handleTokenExpired } = usePostContext()
+  const getUserProfile = async()=>{
+    const token = localStorage.getItem("token")
+    const userID = localStorage.getItem("userID")
+    const userProfile = await axios.get(
+      `http://localhost:3000/melody/profile/get-profile/${userID}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+      
+    )
+    setProfile({
+      "fullname": userProfile.data.data.fullname,
+      "avatar": userProfile.data.data.avatar
+    })
+  }
+  useEffect( ()=> {
+    getUserProfile()
+  }, [])
   // Người dùng chọn ảnh/video
   const handleMediaUpload = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const files = event.target.files;
@@ -40,14 +67,16 @@ const CreatePost: React.FC = () => {
   const uploadToCloudinary = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("image", file);
-    
+
     const res = await axios.post(
       "http://localhost:3000/melody/post/upload-image",
       formData,
-      { headers: { "Content-Type": "multipart/form-data" },
-         withCredentials: false, 
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: false,
       }
     );
+
     return res.data.imageUrl; // URL lay tu  Cloudinary tra ve 
   };
 
@@ -58,40 +87,44 @@ const CreatePost: React.FC = () => {
     setIsPosting(true);
 
     try {
-      // Bước 1: upload toàn bộ ảnh/video lên server
+      // upload toàn bộ ảnh/video lên server
       const uploadedUrls: string[] = [];
       for (const media of uploadedMedia) {
         const url = await uploadToCloudinary(media.file);
         uploadedUrls.push(url);
       }
 
-      //  Bước 2: tạo dữ liệu bài viết
+      //  tạo dữ liệu bài viết
       const postData = {
         caption,
         image: uploadedUrls[0], // có thể chứa nhiều ảnh
         privacy,
       };
 
-      //  Bước 3: gửi bài viết lên server
-      const token = localStorage.getItem("token"); 
+      // gửi bài viết lên server
+      const token = localStorage.getItem("token");
       const res = await axios.post(
         "http://localhost:3000/melody/post/create-post",
-        postData,{
+        postData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      console.log("✅ Server response:", res.data);
+
       alert(" Đã đăng bài thành công!");
 
       // Reset lại form
       setCaption("");
       setUploadedMedia([]);
       setPrivacy("public");
+
     } catch (err) {
-      console.error("❌ Lỗi khi đăng bài:", err);
-      alert("Đăng bài thất bại!");
+      const error = err as AxiosError
+      if (error.response?.status === 401) {
+        handleTokenExpired()
+      }
+      alert("Đăng bài thất bại ")
     } finally {
       setIsPosting(false);
     }
@@ -108,12 +141,12 @@ const CreatePost: React.FC = () => {
           {/* Thông tin user + chế độ riêng tư */}
           <div className="flex items-start gap-4 my-4">
             <img
-              src="https://placehold.co/48x48/E2E8F0/4A5568?text=User"
+              src= {profile.avatar}
               alt="User Avatar"
               className="w-12 h-12 rounded-full"
             />
             <div>
-              <h3 className="font-semibold text-slate-800">Nguyễn Văn A</h3>
+              <h3 className="font-semibold text-slate-800">{profile.fullname} </h3>
               <select
                 value={privacy}
                 onChange={(e) => setPrivacy(e.target.value)}

@@ -11,13 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FaShare } from "react-icons/fa"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 
 interface CommentsOverlayProps {
   post: Post | null
   isOpen: boolean
   onClose: () => void
   onUpdateComments: (postId: string, newComment: Comment) => void
+  updateLikePost: (postID: string) => void
 }
 
 export type ReplyState = {
@@ -33,6 +34,7 @@ export default function CommentsOverlay({
   isOpen,
   onClose,
   onUpdateComments,
+  updateLikePost
 }: CommentsOverlayProps) {
   const createEmptyComment = (): Comment => ({
     id: "",
@@ -46,16 +48,13 @@ export default function CommentsOverlay({
     parentId: undefined,
     replies: [],
   })
-
-
-
-
-
+  if (!isOpen || !post) return null
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState<Comment>(createEmptyComment())
   const [isLikedPost, setIsLikedPost] = useState<boolean>(post?.isLiked ?? false)
   const [commentsCount, setCommentsCount] = useState<number>(post?.commentCount || 0)
   const [loadingComments, setLoadingComments] = useState<boolean>(false)
+  const { addReply, handleTokenExpired } = usePostContext()
   const [replyState, setReplyState] = useState<ReplyState>({
     isReply: false,
     replyingTo: null,
@@ -80,12 +79,19 @@ export default function CommentsOverlay({
           Authorization: `Bearer ${token}`,
         },
       })
+      if (res.data.status === 401) {
+        handleTokenExpired()
+      }
       // setComments(res.data)
-      console.log(res)
+
       setComments(res.data.data[postId])
-      console.log(comments)
+
       // onUpdateComments(post?.id, res.data)
     } catch (err) {
+      const error = err as AxiosError
+      if (error.response?.status === 401) {
+        handleTokenExpired()
+      }
       console.error("Lỗi khi lấy comment:", err)
     } finally {
       setLoadingComments(false)
@@ -93,17 +99,25 @@ export default function CommentsOverlay({
   }
 
   const postCommentAPI = async (postId: string, comment: Comment, token: string) => {
-    const res = await axios.post(
-      `http://localhost:3000/melody/post/${postId}/add-comment`,
-      comment,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/melody/post/${postId}/add-comment`,
+        comment,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      return res.data
+      
+    } catch (err) {
+      const error = err as AxiosError
+      if (error.response?.status === 401) {
+        handleTokenExpired()
       }
-    )
-    return res.data
+    }
   }
 
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -120,12 +134,16 @@ export default function CommentsOverlay({
       }
     }
   }
+  const handleSubmitReplyComment = async (e: React.FormEvent, postId: string, parentCommentId: string, reply: Comment) => {
+    addReply(postId, parentCommentId, reply)
+    console.log("Da them binh luan ")
+  }
 
-  if (!isOpen || !post) return null
 
   return (
+
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-7xl w-full h-full max-h-[80vh] flex overflow-hidden">
+      <div className="bg-white rounded-lg max-w-7xl h-full max-h-[80vh] flex overflow-hidden">
         {/* Post Image */}
         <div className="bg-black flex items-center aspect-square max-w-[50vw] justify-center border-r-5 border-black">
           <img
