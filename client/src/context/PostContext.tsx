@@ -139,7 +139,7 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `http://localhost:3000/melody/post/${postId}/like`, 
+        `http://localhost:3000/melody/post/${postId}/like`,
         {},
         {
           headers: {
@@ -149,7 +149,7 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
       if (res.data.status === 401) {
         handleTokenExpired()
       }
-  
+
       setPosts(posts =>
         posts.map(post =>
           post.id === postId
@@ -158,14 +158,15 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
         )
       )
       fetchPosts()
+      console.log("resssss", res.data)
       console.log("da xu ly update like post")
-      
+
     } catch (err) {
       const error = err as AxiosError
-      if(error.response?.status === 401){
+      if (error.response?.status === 401) {
         handleTokenExpired()
       }
-      
+
     }
   }
   const updateLikeComment = (postId: string, commentId: string) => {

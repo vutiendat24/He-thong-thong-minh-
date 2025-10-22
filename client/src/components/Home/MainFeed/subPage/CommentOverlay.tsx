@@ -54,7 +54,10 @@ export default function CommentsOverlay({
   const [isLikedPost, setIsLikedPost] = useState<boolean>(post?.isLiked ?? false)
   const [commentsCount, setCommentsCount] = useState<number>(post?.commentCount || 0)
   const [loadingComments, setLoadingComments] = useState<boolean>(false)
-  const { addReply, handleTokenExpired } = usePostContext()
+  const { addReply, handleTokenExpired, getPostById } = usePostContext()
+  const [postt, setPostt] = useState<Post>()
+
+
   const [replyState, setReplyState] = useState<ReplyState>({
     isReply: false,
     replyingTo: null,
@@ -68,7 +71,9 @@ export default function CommentsOverlay({
     setIsLikedPost(post.isLiked || false)
     setCommentsCount(post.commentCount || 0)
     fetchComments(post.id)
-  }, [post])
+    setPostt(getPostById(post.id))
+    console.log("postt", postt)
+  }, [postt])
 
   const fetchComments = async (postId: string) => {
     try {
@@ -111,7 +116,7 @@ export default function CommentsOverlay({
         }
       )
       return res.data
-      
+
     } catch (err) {
       const error = err as AxiosError
       if (error.response?.status === 401) {
@@ -138,7 +143,6 @@ export default function CommentsOverlay({
     addReply(postId, parentCommentId, reply)
     console.log("Da them binh luan ")
   }
-
 
   return (
 

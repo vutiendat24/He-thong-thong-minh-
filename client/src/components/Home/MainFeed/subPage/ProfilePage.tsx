@@ -26,6 +26,7 @@ export default function ProfilePage() {
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
     const [isFollowing, setIsFollowing] = useState(false)
     const [isFollowLoading, setIsFollowLoading] = useState(false)
+    const [refreshPosts, setRefreshPosts] = useState(false)
     const { userID } = useParams<{ userID: string }>()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const isOwnProfile = userID === currrentUserId
@@ -37,6 +38,7 @@ export default function ProfilePage() {
     const handleCloseComment = () => {
         setSelectedPost(null)
         setIsCommentsOpen(false)
+        setRefreshPosts(!refreshPosts)
     }
     const handleUploadClick = () => {
         console.log("Upload clicked - triggering file input")
@@ -172,32 +174,33 @@ export default function ProfilePage() {
 
     }
 
-    useEffect(() => {
-        const getPosts = async () => {
-            try {
-                setIsLoading(true)
-                const token = localStorage.getItem("token")
-                const PostDataRes = await axios.get(`http://localhost:3000/melody/post/get-posts/${userID}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-                console.log("PostDataRes", PostDataRes)
-                if (PostDataRes.data.status === 401) {
-                    handleTokenExpired()
-                }
-                const postsData = PostDataRes.data.data
-                setPosts(postsData)
-            } catch (error) {
-                console.error("Error fetching posts:", error)
-            } finally {
-                setIsLoading(false)
+    const getPosts = async () => {
+        try {
+            setIsLoading(true)
+            const token = localStorage.getItem("token")
+            const PostDataRes = await axios.get(`http://localhost:3000/melody/post/get-posts/${userID}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            console.log("PostDataRes", PostDataRes)
+            if (PostDataRes.data.status === 401) {
+                handleTokenExpired()
             }
+            const postsData = PostDataRes.data.data
+            setPosts(postsData)
+           
+            console.log(postsData)
+        } catch (error) {
+            console.error("Error fetching posts:", error)
+        } finally {
+            setIsLoading(false)
         }
-
+    }
+    useEffect(() => {
         getPosts()
         getUserInfo()
-    }, [])
+    }, [refreshPosts])
 
     return (
         <>
@@ -356,6 +359,7 @@ export default function ProfilePage() {
                     post={selectedPost}
                     onUpdateComments={addComment}
                     updateLikePost={updateLikePost}
+
                 />
             )}
         </>

@@ -1,0 +1,11 @@
+Token
+vào file auto_post.py sửa lại cái token 
+lấy token khi mình đăng nhập vào một tk
+
+*Caption*
+muốn đăng về chủ đề gì thì để vào đó nhiều caption
+
+image
+lưu hình ảnh rồi bỏ vào trong file images bỏ càng nhiều càng tốt 
+
+sô lượng bài đăng chình NUM_POSTS

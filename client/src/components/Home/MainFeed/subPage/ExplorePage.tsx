@@ -61,7 +61,7 @@ export default function ExplorePage() {
   const [exploreItems, setExploreItems] = useState<Post[]>(exploreItemsInit || [])
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
-
+  const [refesh, setRefesh ] = useState (false)
   const CallGetExplorePostAPI = async () => {
     try {
       const Exploredata = await axios.get('http://localhost:3000/melody/explore/get-explore', {
@@ -85,7 +85,7 @@ export default function ExplorePage() {
   }
   useEffect(() => {
     CallGetExplorePostAPI()
-  }, [])
+  }, [refesh])
   const handleOpenComments = (post: Post) => {
     setSelectedPost(post)
     setIsCommentsOpen(true)
@@ -94,6 +94,7 @@ export default function ExplorePage() {
   const handleCloseComments = () => {
     setIsCommentsOpen(false)
     setSelectedPost(null)
+    setRefesh(!refesh)
   }
 
 
