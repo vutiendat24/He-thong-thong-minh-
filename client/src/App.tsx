@@ -1,6 +1,4 @@
-
-
-import { Routes,Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 
 
@@ -12,17 +10,30 @@ import MessagePage from '../src/pages/MessagePage'
 
 
 
-function  App() {
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
+function App() {
   return (
-  
-      <Routes>
-        <Route path="/homePage" element={<HomePage/>} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/" element={<LoginForm />} />
-        <Route path="/messages" element={<MessagePage />} />
-      </Routes>
-     
-  )
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<LoginForm />} />
+      <Route path="/signup" element={<SignUp />} />
+
+      {/* Protected routes (require token) */}
+      <Route path="/homePage" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+      <Route path="/messages" element={<PrivateRoute><MessagePage /></PrivateRoute>} />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
 

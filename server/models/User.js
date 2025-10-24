@@ -17,7 +17,8 @@ const userSchema = new mongoose.Schema({
     trim: true
   },
   avatar: {
-    type: String
+    type: String,
+    default: null
   },
   birthday: {
     type: Date
@@ -25,6 +26,14 @@ const userSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  online: {
+    type: Boolean,
+    default: false
+  },
+  lastSeen: {
+    type: Date,
+    default: null
   }
 });
 
