@@ -1,6 +1,6 @@
 
 
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 
 
@@ -18,7 +18,17 @@ import CreatePage from './components/Home/MainFeed/subPage/CreatePage'
 
 
 
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
 function App() {
+
   
   return (
     <Routes>      
@@ -31,6 +41,8 @@ function App() {
         <Route path="profile/:userID" element={<ProfilePage />} />
       </Route>
 
+      <Route path="/messages" element={<PrivateRoute><MessagePage /></PrivateRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
 
       <Route path="/signup" element={<SignUp />} />
       <Route path="/" element={<LoginForm />} />
@@ -38,6 +50,7 @@ function App() {
     </Routes>
 
   )
+
 }
 
 

@@ -10,7 +10,7 @@ const CommentSchema = new mongoose.Schema({
   text:     { type: String, required: true },
   parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment', default: null },
   likes:    { type: Number, default: 0 },
-  createdAt:{ type: Date, default: Date.now }
+  createdAt:{ type: Date, default: Date.now }  
 });
 
 module.exports = mongoose.model('Comment', CommentSchema);
