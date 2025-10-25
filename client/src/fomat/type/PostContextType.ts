@@ -6,6 +6,7 @@ import type Post  from "./Post";
 export type PostContextType = {
    posts: Post[]
    comments: Record<string, Comment[]>
+   currrentUserId :string
     updateCommentCount: (postId: string, newCount: number) => void
     addComment: (postId: string, comment: Comment) => void
     addReply: (postId: string, parentCommentId: string, reply: Comment) => void
@@ -13,5 +14,6 @@ export type PostContextType = {
     updateLikeComment : (postId: string, commentId: string) =>void
     updateLikePost : (postId: string ) => void,
     getIsLogin: () => boolean,
-    setIsUserLogin : (status: boolean) => void,
+    getPostById: (postID: string) => void
+    handleTokenExpired : () =>void 
 }

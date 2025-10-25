@@ -10,9 +10,12 @@ node_modules
 dist
 dist-ssr
 *.local
-server/node_modules
-server/.env
+
+.env
 src/test/*
+
+routes/tesst.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,4 +25,7 @@ src/test/*
 *.ntvs*
 *.njsproj
 *.sln
+
 *.sw?
+
+

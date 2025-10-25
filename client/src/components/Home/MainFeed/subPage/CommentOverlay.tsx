@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import CommentItem from "./CommentItem"
 import { usePostContext } from "../../../../context/PostContext"
@@ -11,19 +11,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FaShare } from "react-icons/fa"
+import axios, { AxiosError } from "axios"
+
 
 interface CommentsOverlayProps {
   post: Post | null
   isOpen: boolean
   onClose: () => void
   onUpdateComments: (postId: string, newComment: Comment) => void
+  updateLikePost: (postID: string) => void
+  commentID?: string // Thêm prop commentID tùy chọn
 }
 
 export type ReplyState = {
   isReply: boolean
   replyingTo: string | null
   replyText: string | null
-  replyToUsername: string | null
+  replyTofullname: string | null
   parrentComment: string | null
 }
 
@@ -32,11 +36,13 @@ export default function CommentsOverlay({
   isOpen,
   onClose,
   onUpdateComments,
+  updateLikePost,
+  commentID, // Nhận commentID từ props
 }: CommentsOverlayProps) {
   const createEmptyComment = (): Comment => ({
     id: "",
-    userId: "",
-    username: "",
+    userID: "",
+    fullname: "",
     avatar: "",
     text: "",
     time: "",
@@ -45,65 +51,136 @@ export default function CommentsOverlay({
     parentId: undefined,
     replies: [],
   })
-
+  
+  if (!isOpen || !post) return null
+  
+  const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState<Comment>(createEmptyComment())
   const [isLikedPost, setIsLikedPost] = useState<boolean>(post?.isLiked ?? false)
   const [commentsCount, setCommentsCount] = useState<number>(post?.commentCount || 0)
-
-  const { getComments, addReply, updateLikePost } = usePostContext()
-
-  // ❌ Bỏ state comments, dùng trực tiếp từ context
-  const comments = post ? getComments(post.id) : []
-
+  const [loadingComments, setLoadingComments] = useState<boolean>(false)
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null)
+  const commentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const { addReply, handleTokenExpired } = usePostContext()
   const [replyState, setReplyState] = useState<ReplyState>({
     isReply: false,
     replyingTo: null,
     replyText: null,
-    replyToUsername: null,
+    replyTofullname: null,
     parrentComment: null,
   })
 
   useEffect(() => {
-    if (post) {
-      setCommentsCount(post?.commentCount || 0)
-      setIsLikedPost(post.isLiked || false)
-    }
+    if (!post) return
+    setIsLikedPost(post.isLiked || false)
+    setCommentsCount(post.commentCount || 0)
+    fetchComments(post.id)
   }, [post])
 
-  if (!isOpen || !post) return null
+  // Hiệu ứng nhấp nháy khi có commentID
+  useEffect(() => {
+    if (commentID && comments.length > 0) {
+      setHighlightedCommentId(commentID)
+      
+      // Sắp xếp comments: đưa comment được highlight lên đầu
+      const sortedComments = [...comments]
+      const highlightedIndex = sortedComments.findIndex(c => c.id === commentID)
+      if (highlightedIndex > 0) {
+        const [highlightedComment] = sortedComments.splice(highlightedIndex, 1)
+        sortedComments.unshift(highlightedComment)
+        setComments(sortedComments)
+      }
+      
+      // Scroll đến đầu danh sách
+      setTimeout(() => {
+        const commentElement = commentRefs.current[commentID]
+        if (commentElement) {
+          commentElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
+      
+      // Tắt highlight sau 2 giây
+      const timer = setTimeout(() => {
+        setHighlightedCommentId(null)
+      }, 2000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [commentID, comments.length])
 
-  const handleSubmitComment = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newComment?.text.trim()) {
-      setCommentsCount(commentsCount + 1)
-      // gọi callback để cập nhật component cha (HomePage)
-      onUpdateComments(post.id, newComment)
-      setNewComment(createEmptyComment()) // reset lại form
+  const fetchComments = async (postId: string) => {
+    try {
+      setLoadingComments(true)
+      const token = localStorage.getItem("token")
+      const res = await axios.get(`http://localhost:3000/melody/post/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      if (res.data.status === 401) {
+        handleTokenExpired()
+      }
+      setComments(res.data.data[postId])
+    } catch (err) {
+      const error = err as AxiosError
+      if (error.response?.status === 401) {
+        handleTokenExpired()
+      }
+      console.error("Lỗi khi lấy comment:", err)
+    } finally {
+      setLoadingComments(false)
     }
   }
 
-  const handleSubmitReplyComment = (
-    e: React.FormEvent,
-    postId: string,
-    CommenParrentId: string,
-    replyComment: Comment
-  ): void => {
-    e.preventDefault()
-    if (newComment?.text.trim()) {
-      setCommentsCount(commentsCount + 1)
-      addReply(postId, CommenParrentId, replyComment)
-      setNewComment(createEmptyComment())
+  const postCommentAPI = async (postId: string, comment: Comment, token: string) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/melody/post/${postId}/add-comment`,
+        comment,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      return res.data
+    } catch (err) {
+      const error = err as AxiosError
+      if (error.response?.status === 401) {
+        handleTokenExpired()
+      }
     }
+  }
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newComment?.text.trim() && post) {
+      try {
+        const token = localStorage.getItem("token") || ""
+        await postCommentAPI(post.id, newComment, token)
+        await fetchComments(post.id)
+        setNewComment(createEmptyComment())
+        setCommentsCount((prev) => prev + 1)
+      } catch (err) {
+        console.error("Lỗi gửi bình luận:", err)
+      }
+    }
+  }
+  
+  const handleSubmitReplyComment = async (e: React.FormEvent, postId: string, parentCommentId: string, reply: Comment) => {
+    addReply(postId, parentCommentId, reply)
+    console.log("Da them binh luan ")
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-7xl w-full h-full max-h-[80vh] flex overflow-hidden">
+      <div className="bg-white rounded-lg max-w-7xl h-full max-h-[80vh] flex overflow-hidden">
         {/* Post Image */}
         <div className="bg-black flex items-center aspect-square max-w-[50vw] justify-center border-r-5 border-black">
           <img
             src={post.image || "/placeholder.svg"}
-            alt={`Post by ${post.username}`}
+            alt={`Post by ${post.fullname}`}
             className="w-full h-full object-cover"
           />
         </div>
@@ -112,14 +189,14 @@ export default function CommentsOverlay({
         <div className="max-w-[40vw] flex flex-col">
           {/* Caption */}
           <div className="p-4 border-b">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start flex-1 gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={post.avatar || "/placeholder.svg"} />
-                <AvatarFallback>{post.username[0].toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{post.fullname[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <p className="text-sm">
-                  <span className="font-semibold">{post.username}</span> {post.caption}
+                  <span className="font-semibold">{post.fullname}</span> {post.caption}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">{post.time}</p>
               </div>
@@ -132,13 +209,24 @@ export default function CommentsOverlay({
           {/* Comments List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
-              <CommentItem
+              <div
                 key={comment.id}
-                postId={post.id}
-                comment={comment}
-                replyState={replyState}
-                setReplyState={setReplyState}
-              />
+                ref={(el) => {
+                  commentRefs.current[comment.id] = el
+                }}
+                className={`transition-all duration-300 ${
+                  highlightedCommentId === comment.id
+                    ? 'animate-pulse bg-yellow-100 p-2 rounded-lg'
+                    : ''
+                }`}
+              >
+                <CommentItem
+                  postId={post.id}
+                  comment={comment}
+                  replyState={replyState}
+                  setReplyState={setReplyState}
+                />
+              </div>
             ))}
           </div>
 
@@ -154,9 +242,9 @@ export default function CommentsOverlay({
                 <div className="flex flex-row">
                   <p>
                     Đang trả lời{" "}
-                    {replyState.replyToUsername !== null ? (
+                    {replyState.replyTofullname !== null ? (
                       <span className="inline-block text-blue-400 text-xl">
-                        {replyState.replyToUsername}
+                        {replyState.replyTofullname}
                       </span>
                     ) : (
                       ""
@@ -166,16 +254,16 @@ export default function CommentsOverlay({
                 <div className="flex">
                   <Input
                     placeholder={
-                      replyState.replyToUsername !== null
-                        ? "Trả lời " + replyState.replyToUsername
+                      replyState.replyTofullname !== null
+                        ? "Trả lời " + replyState.replyTofullname
                         : ""
                     }
                     value={newComment?.text}
                     onChange={(e) =>
                       setNewComment({
                         id: uuidv4(),
-                        userId: "Tien Dat",
-                        username: "ddd",
+                        userID: "Tien Dat",
+                        fullname: "ddd",
                         avatar: "",
                         text: e.target.value,
                         time: "10/5",
@@ -236,8 +324,8 @@ export default function CommentsOverlay({
                   onChange={(e) =>
                     setNewComment({
                       id: String(post.commentCount + 1),
-                      userId: "Tien Dat",
-                      username: "ddd",
+                      userID: "Tien Dat",
+                      fullname: "ddd",
                       avatar: "",
                       text: e.target.value,
                       time: "10/5",

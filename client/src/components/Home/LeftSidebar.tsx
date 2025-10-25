@@ -1,5 +1,7 @@
-
 import { useNavigate } from "react-router-dom"
+import axios from "axios";
+const API_BASE = "http://localhost:3000/melody";
+
 import { Heart, Home, Search, Compass, MessageCircle, PlusSquare, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { NavigationPage } from "./../../fomat/type/NavigationPage"
@@ -20,14 +22,28 @@ export default function LeftSidebar({ currentPage, onNavigate }: LeftSidebarProp
     { id: "create" as NavigationPage, icon: PlusSquare, label: "Tạo" },
     { id: "profile" as NavigationPage, icon: User, label: "Trang cá nhân" },
   ]
-  const handleSignOut = () => {
-
-    navigate("/")
+  const handleSignOut = async () => {
+    try {
+      // gọi logout backend (nếu có token)
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          await axios.post(`${API_BASE}/auth/logout`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        } catch (e) {
+          // ignore error but proceed to clear token
+        }
+      }
+      localStorage.removeItem("token");
+      try { delete axios.defaults.headers.common["Authorization"]; } catch {}
+    } catch (e) {
+      console.warn("Error clearing token on sign out:", e);
+    }
+    navigate("/login");
   }
   return (
     <div className="w-16 lg:w-56 xl:w-64 2xl:w-72 border-r border-gray-200 flex flex-col fixed h-full z-10 bg-white transition-all duration-300">
       <div className="p-3 lg:p-6">
-        <h1 className="text-2xl font-bold hidden lg:block">Melody Media</h1>
+        <h1 className="text-2xl font-bold font-[Cookie] hidden lg:block">Melody Media</h1>
         <div className="lg:hidden flex justify-center">
           <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">IG</span>
@@ -50,7 +66,12 @@ export default function LeftSidebar({ currentPage, onNavigate }: LeftSidebarProp
                 onClick={() => {
                   if (item.id === "messages") {
                     navigate("/messages")
-                  } else onNavigate(item.id)
+                  }else if(item.id === "profile" ){
+                    const userID = localStorage.getItem("userID")
+                    navigate(`/homePage/${item.id}/${userID}`)
+                  } else{    
+                      navigate(`/homePage/${item.id}`)
+                  } 
                 }}
               >
                 <Icon size={24} />

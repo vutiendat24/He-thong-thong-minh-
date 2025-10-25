@@ -3,8 +3,8 @@
 
 export default interface Post {
   id: string
-  userId: string
-  username: string
+  userID: string
+  fullname: string
   avatar?: string
   image: string
   caption?: string

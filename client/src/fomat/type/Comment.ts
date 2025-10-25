@@ -2,8 +2,8 @@
 
 export default interface Comment {
   id: string
-  userId: string
-  username: string
+  userID: string
+  fullname: string
   avatar?: string
   text: string
   time: string
@@ -12,3 +12,18 @@ export default interface Comment {
   parentId?: string // For reply comments
   replies?: Comment[] // Child replies
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
