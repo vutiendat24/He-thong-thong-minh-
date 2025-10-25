@@ -107,7 +107,7 @@ export default function MessagePage() {
     const token = getToken();
     if (!token || !currentUserId) return;
 
-    const socket = ioClient("http://localhost:3000", { query: { currentUserId },auth: { token } });
+    const socket = ioClient("http://localhost:3000", { query: { currentUserId }, auth: { token } });
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -118,10 +118,10 @@ export default function MessagePage() {
     // Nếu server trả về tokenExpired -> logout phía client và điều hướng về trang đăng nhập
     socket.on("tokenExpired", () => {
       try {
-        localStorage.removeItem("token"); 
+        localStorage.removeItem("token");
         delete axios.defaults.headers.common["Authorization"];
-      } catch {}
-      try { navigate("/"); } catch {}
+      } catch { }
+      try { navigate("/"); } catch { }
     });
 
     // Hàm cập nhật trạng thái online/offline cho bạn bè
@@ -261,7 +261,7 @@ export default function MessagePage() {
     return () => {
       try {
         document.head.removeChild(style);
-      } catch {}
+      } catch { }
     };
   }, []);
 
@@ -315,7 +315,7 @@ export default function MessagePage() {
     } catch (err) {
       console.error("Lỗi gửi tin nhắn:", err);
     }
-   };
+  };
 
   // Danh sách emoji mẫu
   const EMOJIS = ["😊", "😂", "😍", "👍", "🎉", "😢", "🔥", "❤️"];
@@ -375,10 +375,12 @@ export default function MessagePage() {
           {/* Nút quay lại (hiển thị rõ) */}
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 flex items-center justify-center w-9 h-9 rounded-lg text-blue-800"
+            className="absolute top-4 left-4 flex items-center gap-2 px-3 py-2 
+                 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 
+                 active:scale-95 transition-all shadow-sm"
           >
-            {/* gán color tĩnh để chắc chắn hiển thị */}
-            <ChevronLeft className="w-5 h-5 text-blue-500"  />
+            <ChevronLeft className="w-5 h-5 stroke-blue-600" strokeWidth={2} />
+            
           </button>
           <h1 className="text-2xl font-bold text-slate-800 text-center">Chat</h1>
           <div className="relative mt-6">
@@ -411,9 +413,8 @@ export default function MessagePage() {
                 <div
                   key={conv._id}
                   onClick={() => handleSelectConversation(conv)}
-                  className={`flex items-center gap-4 p-3 m-2 cursor-pointer rounded-lg transition-colors ${
-                    isSelected ? "bg-indigo-500 text-white" : "hover:bg-slate-100"
-                  }`}
+                  className={`flex items-center gap-4 p-3 m-2 cursor-pointer rounded-lg transition-colors ${isSelected ? "bg-indigo-500 text-white" : "hover:bg-slate-100"
+                    }`}
                 >
                   <div className="relative">
                     <img
@@ -436,18 +437,16 @@ export default function MessagePage() {
                         {other?.fullname ?? other?.email}
                       </h3>
                       <span
-                        className={`text-xs ${
-                          isSelected ? "text-indigo-200" : "text-slate-400"
-                        }`}
+                        className={`text-xs ${isSelected ? "text-indigo-200" : "text-slate-400"
+                          }`}
                       >
                         {formatTimestamp(conv.updatedAt)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mt-1">
                       <p
-                        className={`text-sm truncate ${
-                          isSelected ? "text-indigo-100" : "text-slate-500"
-                        }`}
+                        className={`text-sm truncate ${isSelected ? "text-indigo-100" : "text-slate-500"
+                          }`}
                       >
                         {conv.lastMessage ?? ""}
                       </p>
@@ -476,8 +475,8 @@ export default function MessagePage() {
               src={
                 selectedConv
                   ? getOtherParticipant(selectedConv).avatar ?? `https://placehold.co/100x100/ccc/fff?text=${(
-                      getOtherParticipant(selectedConv).fullname ?? "U"
-                    ).slice(0, 1)}`
+                    getOtherParticipant(selectedConv).fullname ?? "U"
+                  ).slice(0, 1)}`
                   : `https://placehold.co/100x100/ccc/fff?text=?`
               }
               alt={selectedConv ? getOtherParticipant(selectedConv).fullname : "Chat"}
@@ -487,7 +486,7 @@ export default function MessagePage() {
               <h2 className="font-bold text-slate-800 text-lg">
                 {selectedConv
                   ? getOtherParticipant(selectedConv).fullname ??
-                    getOtherParticipant(selectedConv).email
+                  getOtherParticipant(selectedConv).email
                   : "Chọn cuộc hội thoại"}
               </h2>
               <p className={`text-sm font-medium flex items-center gap-1.5 ${selectedConv && getOtherParticipant(selectedConv)?.online ? 'text-green-500' : 'text-slate-400'}`}>
@@ -531,9 +530,8 @@ export default function MessagePage() {
               return (
                 <div
                   key={message._id}
-                  className={`flex items-end gap-3 ${
-                    senderIsMe ? "flex-row-reverse" : "flex-row"
-                  } animate-fade-in-up`}
+                  className={`flex items-end gap-3 ${senderIsMe ? "flex-row-reverse" : "flex-row"
+                    } animate-fade-in-up`}
                 >
                   {!senderIsMe && (
                     <img
@@ -547,17 +545,15 @@ export default function MessagePage() {
                     />
                   )}
                   <div
-                    className={`max-w-[70%] lg:max-w-[60%] px-4 py-2.5 rounded-2xl shadow-sm ${
-                      senderIsMe
+                    className={`max-w-[70%] lg:max-w-[60%] px-4 py-2.5 rounded-2xl shadow-sm ${senderIsMe
                         ? "bg-indigo-600 text-white rounded-br-none"
                         : "bg-white text-slate-800 rounded-bl-none"
-                    }`}
+                      }`}
                   >
                     {message.content && <p className="text-sm">{message.content}</p>}
                     <p
-                      className={`text-xs mt-1 text-right ${
-                        senderIsMe ? "text-indigo-200" : "text-slate-400"
-                      }`}
+                      className={`text-xs mt-1 text-right ${senderIsMe ? "text-indigo-200" : "text-slate-400"
+                        }`}
                     >
                       {formatTimestamp(message.createdAt)}
                     </p>
@@ -602,7 +598,7 @@ export default function MessagePage() {
               disabled={!newMessage.trim()}
             >
               {/* gán màu trắng cho icon gửi */}
-              <Send className="w-5 h-5" color="#ffffff" />
+              <Send className="w-5 h-5" color="blue" />
             </button>
           </div>
         </footer>
