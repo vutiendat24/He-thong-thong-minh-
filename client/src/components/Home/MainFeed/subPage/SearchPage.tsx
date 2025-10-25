@@ -45,11 +45,13 @@ export default function SearchPage() {
   const { getPostById, addComment, handleTokenExpired, updateLikePost } = usePostContext()
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+  const [refesh, setRefesh] = useState(false)
   const navigate = useNavigate()
   const handleOpenComments = (post: Post) => {
     console.log("mo bai viet ")
     setSelectedPost(post)
     setIsCommentsOpen(true)
+    setRefesh(!refesh)
   }
   const handleCloseComments = () => {
     setIsCommentsOpen(false)
@@ -90,7 +92,7 @@ export default function SearchPage() {
     } finally {
       setIsSearching(false)
     }
-  }, [])
+  }, [refesh])
 
   const tabs = [
     { id: "top", label: "Hàng đầu", icon: Search },

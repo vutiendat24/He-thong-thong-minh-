@@ -87,6 +87,7 @@ export default function ExplorePage() {
     CallGetExplorePostAPI()
   }, [])
   const handleOpenComments = (post: Post) => {
+    console.log()
     setSelectedPost(post)
     setIsCommentsOpen(true)
   }
@@ -120,13 +121,13 @@ export default function ExplorePage() {
             </div>
           ))}
         </div>
-        <CommentsOverlay
-          post={selectedPost}
+        {selectedPost && <CommentsOverlay
+          post ={selectedPost}
           isOpen={isCommentsOpen}
           onClose={handleCloseComments}
           onUpdateComments={addComment}
           updateLikePost={updateLikePost}
-        />
+        />}
       </div>
     </div>
   )

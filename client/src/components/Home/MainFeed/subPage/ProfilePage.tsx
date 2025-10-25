@@ -26,12 +26,15 @@ export default function ProfilePage() {
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
     const [isFollowing, setIsFollowing] = useState(false)
     const [isFollowLoading, setIsFollowLoading] = useState(false)
+    const [refresh, setRefesh] = useState(false)
     const { userID } = useParams<{ userID: string }>()
     const fileInputRef = useRef<HTMLInputElement>(null)
+
     const isOwnProfile = userID === currrentUserId
     const handleOpenComment = (post: Post) => {
         setSelectedPost(post)
         setIsCommentsOpen(true)
+        setRefesh(!refresh)
     }
 
     const handleCloseComment = () => {
@@ -197,7 +200,7 @@ export default function ProfilePage() {
 
         getPosts()
         getUserInfo()
-    }, [])
+    }, [refresh])
 
     return (
         <>
@@ -217,7 +220,7 @@ export default function ProfilePage() {
                                                 className="absolute inline-block bottom-0 right-0 z-10 h-7 w-7"
                                                 aria-label="Tùy chọn avatar"
                                             >
-                                                <Camera className="h-5 w-5" />
+                                                <Camera className="h-5 w-5 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                                             </button>
                                         </DropdownMenuTrigger>
 

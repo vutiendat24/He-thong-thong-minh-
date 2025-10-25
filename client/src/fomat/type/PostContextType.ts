@@ -14,7 +14,6 @@ export type PostContextType = {
     updateLikeComment : (postId: string, commentId: string) =>void
     updateLikePost : (postId: string ) => void,
     getIsLogin: () => boolean,
-   
-    getPostById: (postID: string) => Post | undefined,
+    getPostById: (postID: string) => void
     handleTokenExpired : () =>void 
 }

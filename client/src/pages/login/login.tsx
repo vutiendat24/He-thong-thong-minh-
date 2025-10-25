@@ -1,6 +1,6 @@
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,16 @@ const LoginForm = () => {
   
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  useEffect(()=>{
+    try {
+      const token = localStorage.getItem("token")
+      // if(token){
+      //   navigate("/homePage/home")
+      // }
+    } catch (error) {
+      
+    }
+  })
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setError("")

@@ -25,8 +25,8 @@ export default function MainFeed({ currentPage }: MainFeedProps) {
         return <SearchPage  />
       case "explore":
         return <ExplorePage />
-      case "notifications":
-        return <NotificationsPage />
+      // case "notifications":
+      //   return <NotificationsPage />
       case "create":
         return <CreatePage />
       case "profile":{

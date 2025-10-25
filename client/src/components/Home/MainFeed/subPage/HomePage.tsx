@@ -71,6 +71,7 @@ export default function PostPage() {
     const [selectedPost, setSelectedPost] = useState<Post | null>(null)
     const [isCommentsOpen, setIsCommentsOpen] = useState(false)
     const [viewStartTime, setViewStartTime] = useState<number>(Date.now())
+ 
 
     const { posts, addComment, updateLikePost, handleTokenExpired } = usePostContext()
 
@@ -156,7 +157,7 @@ export default function PostPage() {
         setSelectedPost(post)
         setIsCommentsOpen(true)
         setViewStartTime(Date.now()) // ✅ FIX: Set viewStartTime khi mở
-
+       
         collectUserData('open_comments', {
             postId: post.id,
             postAuthor: post.fullname,
@@ -319,6 +320,7 @@ export default function PostPage() {
                 onClose={handleCloseComments}
                 onUpdateComments={addComment}
                 updateLikePost={updateLikePost}
+                commentID='68f9bfe7402d40a361408cf9'
             />
         </>
     )

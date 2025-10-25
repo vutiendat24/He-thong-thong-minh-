@@ -59,8 +59,8 @@ const initialComments: Record<string, Comment[]> = {
 export function PostProvider({ children }: { children: React.ReactNode }) {
 
   const [isLogin, setIsLogin] = useState(false)
-  const [posts, setPosts] = useState<Post[]>(initialPosts)
-  const [comments, setComments] = useState<Record<string, Comment[]>>(initialComments)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [comments, setComments] = useState<Record<string, Comment[]>>({"":[]})
   // luu tru theo dang string: id cua bai viet
   //              comment[] : danh sach comment cua bai viet do
 
@@ -95,6 +95,7 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
   const getPostById = (postID: string): Post | undefined => {
     return posts.find((post) => post.id === postID)
   }
+
   const updateCommentCount = (postId: string, newCount: number) => {
     setPosts((prevPosts) => prevPosts.map((post) => (post.id === postId ? { ...post, commentCount: newCount } : post)))
   }
@@ -130,11 +131,10 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
     navigate("/")
   }
 
-
-
   const getComments = (postId: string) => {
     return comments[postId] || []
   }
+
   const updateLikePost = async (postId: String) => {
     try {
       const token = localStorage.getItem("token");
@@ -158,14 +158,12 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
         )
       )
       fetchPosts()
-      console.log("da xu ly update like post")
-      
+      console.log("da xu ly update like post")      
     } catch (err) {
       const error = err as AxiosError
       if(error.response?.status === 401){
         handleTokenExpired()
-      }
-      
+      }      
     }
   }
   const updateLikeComment = (postId: string, commentId: string) => {
@@ -194,7 +192,6 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
     updateLikeComment,
     updateLikePost,
     getIsLogin,
-
     handleTokenExpired
   }
 

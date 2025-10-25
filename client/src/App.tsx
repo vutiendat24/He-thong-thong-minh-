@@ -19,14 +19,14 @@ import CreatePage from './components/Home/MainFeed/subPage/CreatePage'
 
 
 function App() {
+  
   return (
-    <Routes>
-      
+    <Routes>      
       <Route path="/homePage" element={<HomePage />} >
         <Route path="home" element={<PostPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="explore" element={<ExplorePage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="notifications" element={<NotificationsPage  />} />
         <Route path="create" element={<CreatePage />} />
         <Route path="profile/:userID" element={<ProfilePage />} />
       </Route>

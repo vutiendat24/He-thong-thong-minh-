@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { v4 as uuidv4 } from "uuid"
 import CommentItem from "./CommentItem"
 import { usePostContext } from "../../../../context/PostContext"
@@ -13,12 +13,14 @@ import { Input } from "@/components/ui/input"
 import { FaShare } from "react-icons/fa"
 import axios, { AxiosError } from "axios"
 
+
 interface CommentsOverlayProps {
   post: Post | null
   isOpen: boolean
   onClose: () => void
   onUpdateComments: (postId: string, newComment: Comment) => void
   updateLikePost: (postID: string) => void
+  commentID?: string // Thêm prop commentID tùy chọn
 }
 
 export type ReplyState = {
@@ -34,7 +36,8 @@ export default function CommentsOverlay({
   isOpen,
   onClose,
   onUpdateComments,
-  updateLikePost
+  updateLikePost,
+  commentID, // Nhận commentID từ props
 }: CommentsOverlayProps) {
   const createEmptyComment = (): Comment => ({
     id: "",
@@ -48,12 +51,16 @@ export default function CommentsOverlay({
     parentId: undefined,
     replies: [],
   })
+  
   if (!isOpen || !post) return null
+  
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState<Comment>(createEmptyComment())
   const [isLikedPost, setIsLikedPost] = useState<boolean>(post?.isLiked ?? false)
   const [commentsCount, setCommentsCount] = useState<number>(post?.commentCount || 0)
   const [loadingComments, setLoadingComments] = useState<boolean>(false)
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null)
+  const commentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const { addReply, handleTokenExpired } = usePostContext()
   const [replyState, setReplyState] = useState<ReplyState>({
     isReply: false,
@@ -70,6 +77,37 @@ export default function CommentsOverlay({
     fetchComments(post.id)
   }, [post])
 
+  // Hiệu ứng nhấp nháy khi có commentID
+  useEffect(() => {
+    if (commentID && comments.length > 0) {
+      setHighlightedCommentId(commentID)
+      
+      // Sắp xếp comments: đưa comment được highlight lên đầu
+      const sortedComments = [...comments]
+      const highlightedIndex = sortedComments.findIndex(c => c.id === commentID)
+      if (highlightedIndex > 0) {
+        const [highlightedComment] = sortedComments.splice(highlightedIndex, 1)
+        sortedComments.unshift(highlightedComment)
+        setComments(sortedComments)
+      }
+      
+      // Scroll đến đầu danh sách
+      setTimeout(() => {
+        const commentElement = commentRefs.current[commentID]
+        if (commentElement) {
+          commentElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
+      
+      // Tắt highlight sau 2 giây
+      const timer = setTimeout(() => {
+        setHighlightedCommentId(null)
+      }, 2000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [commentID, comments.length])
+
   const fetchComments = async (postId: string) => {
     try {
       setLoadingComments(true)
@@ -82,11 +120,7 @@ export default function CommentsOverlay({
       if (res.data.status === 401) {
         handleTokenExpired()
       }
-      // setComments(res.data)
-
       setComments(res.data.data[postId])
-
-      // onUpdateComments(post?.id, res.data)
     } catch (err) {
       const error = err as AxiosError
       if (error.response?.status === 401) {
@@ -111,7 +145,6 @@ export default function CommentsOverlay({
         }
       )
       return res.data
-      
     } catch (err) {
       const error = err as AxiosError
       if (error.response?.status === 401) {
@@ -134,14 +167,13 @@ export default function CommentsOverlay({
       }
     }
   }
+  
   const handleSubmitReplyComment = async (e: React.FormEvent, postId: string, parentCommentId: string, reply: Comment) => {
     addReply(postId, parentCommentId, reply)
     console.log("Da them binh luan ")
   }
 
-
   return (
-
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg max-w-7xl h-full max-h-[80vh] flex overflow-hidden">
         {/* Post Image */}
@@ -177,13 +209,24 @@ export default function CommentsOverlay({
           {/* Comments List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {comments.map((comment) => (
-              <CommentItem
+              <div
                 key={comment.id}
-                postId={post.id}
-                comment={comment}
-                replyState={replyState}
-                setReplyState={setReplyState}
-              />
+                ref={(el) => {
+                  commentRefs.current[comment.id] = el
+                }}
+                className={`transition-all duration-300 ${
+                  highlightedCommentId === comment.id
+                    ? 'animate-pulse bg-yellow-100 p-2 rounded-lg'
+                    : ''
+                }`}
+              >
+                <CommentItem
+                  postId={post.id}
+                  comment={comment}
+                  replyState={replyState}
+                  setReplyState={setReplyState}
+                />
+              </div>
             ))}
           </div>
 
