@@ -14,9 +14,7 @@ function notificationSocket(io, socket){
       })
     }
   })
-  socket.on("disconnect", ()=>{
-    onlineUsers.delete(socket.userID)
-  })
+ 
   socket.on("test", ()=>{
     console.log("test socket gui thong bao")
   })

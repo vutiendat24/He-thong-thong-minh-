@@ -107,7 +107,7 @@ export default function MessagePage() {
     const token = getToken();
     if (!token || !currentUserId) return;
 
-    const socket = ioClient("http://localhost:3000", { auth: { token } });
+    const socket = ioClient("http://localhost:3000", { query: { currentUserId },auth: { token } });
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -375,10 +375,10 @@ export default function MessagePage() {
           {/* Nút quay lại (hiển thị rõ) */}
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 flex items-center justify-center w-9 h-9 rounded-lg hover:bg-slate-100 transition-colors z-10 text-slate-500"
+            className="absolute top-4 left-4 flex items-center justify-center w-9 h-9 rounded-lg text-blue-800"
           >
             {/* gán color tĩnh để chắc chắn hiển thị */}
-            <ChevronLeft className="w-5 h-5" color="#64748b" />
+            <ChevronLeft className="w-5 h-5 text-blue-500"  />
           </button>
           <h1 className="text-2xl font-bold text-slate-800 text-center">Chat</h1>
           <div className="relative mt-6">

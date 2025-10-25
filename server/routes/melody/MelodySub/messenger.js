@@ -20,7 +20,7 @@ function getUserIdFromAuthHeader(req) {
 		const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
 		const json = Buffer.from(b64, "base64").toString("utf8");
 		const obj = JSON.parse(json);
-		return obj?.id ?? obj?._id ?? obj?.userId ?? null;
+		return obj?.id ?? obj?._id ?? obj?.userId ?? obj?.userID ?? null;
 	} catch (e) {
 		return null;
 	}
@@ -30,6 +30,7 @@ function getUserIdFromAuthHeader(req) {
 MessageRouter.get("/conversations", async (req, res) => {
 	try {
 		const userId = getUserIdFromAuthHeader(req);
+		// const userId = "68e68f7d66b17e22175b8a23"
 		if (!userId) return res.status(401).json({ message: "Unauthorized" });
 		const conversations = await Conversation.find({ participants: userId })
 			.populate("participants", "_id fullname email avatar online")
@@ -99,6 +100,7 @@ MessageRouter.post("/message", async (req, res) => {
 	try {
 		const { conversationId, content } = req.body;
 		const senderId = getUserIdFromAuthHeader(req);
+		// const senderId = "68e68f7d66b17e22175b8a23";
 		if (!senderId) return res.status(401).json({ message: "Unauthorized" });
 		if (!conversationId || !content) return res.status(400).json({ message: "Thiếu dữ liệu tin nhắn" });
 

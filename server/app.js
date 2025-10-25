@@ -13,7 +13,6 @@ app.use(express.json());
 
 const neo4jConnect = require('./config/Neo4jConf.js');
 const http = require('http');
-const { Server } = require('socket.io');
 const chatSocket = require('./socket/chatSocket');
 
 

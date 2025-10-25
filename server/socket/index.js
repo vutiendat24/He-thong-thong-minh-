@@ -31,6 +31,9 @@ function initSocket(httpServer) {
       console.log(`User disconnected: ${socket.userID}`)
     })
   })
+  io.on("disconnect", ()=>{
+    onlineUsers.delete(socket.userID)
+  })
   return io;
 }
 

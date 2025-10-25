@@ -207,7 +207,7 @@ export default function PostPage() {
 
     const handleAvatarClick = (post: Post) => {
         collectUserData('profile_click', {
-            userId: post.id,
+            userID: post.id,
             username: post.fullname,
             clickLocation: 'avatar'
         })
