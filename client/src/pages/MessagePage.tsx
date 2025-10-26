@@ -87,6 +87,7 @@ export default function MessagePage() {
       if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         const uid = decodeUserIdFromToken(token);
+        console.log("uid", uid)
         setCurrentUserId(uid);
       } else {
         delete axios.defaults.headers.common["Authorization"];
@@ -107,7 +108,7 @@ export default function MessagePage() {
     const token = getToken();
     if (!token || !currentUserId) return;
 
-    const socket = ioClient("http://localhost:3000", { query: { currentUserId }, auth: { token } });
+    const socket = ioClient("http://localhost:3000", { query: { userID: currentUserId }, auth: { token } });
     socketRef.current = socket;
 
     socket.on("connect", () => {
