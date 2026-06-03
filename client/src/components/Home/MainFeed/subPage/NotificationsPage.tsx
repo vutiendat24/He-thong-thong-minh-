@@ -1,30 +1,66 @@
 
 import type { NotificationData } from "@/fomat/type/Notification";
-import { NotificationProvider, useNotification } from "@/context/NotificationContext";
+import { useNotification } from "@/context/NotificationContext";
 import { useSocketContext } from "@/context/SocketContext";
 
 
 import { Bell, Heart, MessageCircle, User, ArrowLeft } from 'lucide-react';
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CommentsOverlay from "./CommentOverlay";
+import type Post from "@/fomat/type/Post";
+import axios from "axios";
+import { usePostContext } from "@/context/PostContext";
 
 const NotificationsPage: React.FC = () => {
-  const {socket} = useSocketContext()
-  console.log("socketaaa", socket)
+  const navigate = useNavigate()
   const { notifications, markAsRead } = useNotification();
-  const [currentView, setCurrentView] = useState<'notifications' | 'post'>('notifications');
-  const [selectedPostId, setSelectedPostId] = useState<string>('');
+  const [postDetail, setPostDetail] = useState<Post | null>(null)
+  const [isOpenCommentOverlay, setIsOpenCommentOverlay] = useState(false)
   const [highlightCommentId, setHighlightCommentId] = useState<string | undefined>();
 
-  const onNotificationClick = (notification: NotificationData) => {
-    if (notification.type === 'like' && notification.postId) {
-      setSelectedPostId(notification.postId);
-      setHighlightCommentId(undefined);
-      setCurrentView('post');
-    } else if (notification.type === 'comment' && notification.postId) {
-      setSelectedPostId(notification.postId);
-      setHighlightCommentId(notification.commentId);
-      setCurrentView('post');
+    const { addComment, currrentUserId, updateLikePost, handleTokenExpired } = usePostContext()
+    const handleOpenComment = (post: Post) => {
+          setPostDetail(post)
+          setIsOpenCommentOverlay(true)
+      }
+  
+      const handleCloseComment = () => {
+          setPostDetail(null)
+          setIsOpenCommentOverlay(false)
+      }
+  const onNotificationClick = async (notification: NotificationData) => {
+    await axios.post(`http://localhost:3000/melody/notify/read-notification/${notification.id}`,{}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+    if (notification.type === 'follow') {
+      navigate(`/homePage/profile/${notification.senderId}`)
+    } else {
+      // lay chi tiet thong tin cua bai viet cua thong bao duoc chon 
+      const apiRes = await axios.get(`http://localhost:3000/melody/post/get-post/${notification.postId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+
+      if (apiRes.data.success === true) {
+        setPostDetail(apiRes.data.data)
+      }
+
+
+      if (notification.type === 'like' && notification.postId) {
+        setHighlightCommentId(undefined);
+        setIsOpenCommentOverlay(true);
+      } else if (notification.type === 'comment' && notification.postId) {
+        setHighlightCommentId(notification.commentId);
+        setIsOpenCommentOverlay(true);
+      }
     }
+
+
+
   };
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -42,17 +78,13 @@ const NotificationsPage: React.FC = () => {
   };
 
   const handleNotificationClick = (notification: NotificationData) => {
-    socket?.emit("test",{})
+   
 
     if (!notification.isRead) {
       markAsRead(notification.id);
     }
 
-    // Điều hướng dựa trên loại thông báo
-    if (notification.type === 'like' || notification.type === 'comment') {
-      onNotificationClick(notification);
-    }
-    // Follow không cần điều hướng đến post
+    onNotificationClick(notification);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -67,7 +99,17 @@ const NotificationsPage: React.FC = () => {
         return null;
     }
   };
+  if (notifications.length === 0) {
+    return (
+      <div className="h-screen overflow-y-auto bg-white">
+        <div className="p-4 lg:p-8">
+          <h2 className="text-[40px] font-semibold mb-6">Thông báo</h2>
+          <h2 className="text-l text-red-700 mb-6 italic ">Bạn không có thông báo nào</h2>
 
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="h-screen overflow-y-auto bg-white">
       <div className="p-4 lg:p-8">
@@ -123,6 +165,17 @@ const NotificationsPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {isOpenCommentOverlay && (
+                      <CommentsOverlay
+                          isOpen={isOpenCommentOverlay}
+                          onClose={handleCloseComment}
+                          post={postDetail}
+                          onUpdateComments={addComment}
+                          updateLikePost={updateLikePost}
+                          commentID = {highlightCommentId}
+                      />
+                  )}
     </div>
   );
 };

@@ -1,18 +1,13 @@
 import React from "react";
-import { io as ioClient, Socket } from "socket.io-client";
+// dùng socket dùng chung từ SocketContext
 import axios from "axios";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Search,
-  Send,
-  Phone,
-  Video,
-  MoreVertical,
-  ChevronLeft,
-  Loader2,
-  Smile,
-} from "lucide-react";
+import { Search, Phone, Video, MoreVertical, ChevronLeft, Loader2 } from "lucide-react";
+import ConversationList from "../components/Message/ConversationList";
+import MessageList from "../components/Message/MessageList";
+import MessageInput from "../components/Message/MessageInput";
+import { useSocketContext } from "@/context/SocketContext";
 
 // --- Định nghĩa kiểu dữ liệu (Tiếng Việt) ---
 interface User {
@@ -48,13 +43,14 @@ export default function MessagePage() {
   // trạng thái ứng dụng
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+  const selectedConvRef = useRef<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const { socket, initiateCall } = useSocketContext() ?? {};
 
   // Lấy token từ localStorage và decode userId từ payload JWT
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -103,29 +99,13 @@ export default function MessagePage() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // --- Kết nối Socket.IO: join phòng user và lắng nghe sự kiện realtime ---
+  // --- Lắng nghe realtime bằng socket dùng chung ---
   useEffect(() => {
-    const token = getToken();
-    if (!token || !currentUserId) return;
+    if (!socket || !currentUserId) return;
 
-    const socket = ioClient("http://localhost:3000", { query: { userID: currentUserId }, auth: { token } });
-    socketRef.current = socket;
+    // tham gia phòng theo userId (nếu cần)
+    socket.emit("join", currentUserId);
 
-    socket.on("connect", () => {
-      // tham gia phòng theo userId (server sẽ xử lý)
-      socket.emit("join", currentUserId);
-    });
-
-    // Nếu server trả về tokenExpired -> logout phía client và điều hướng về trang đăng nhập
-    socket.on("tokenExpired", () => {
-      try {
-        localStorage.removeItem("token");
-        delete axios.defaults.headers.common["Authorization"];
-      } catch { }
-      try { navigate("/"); } catch { }
-    });
-
-    // Hàm cập nhật trạng thái online/offline cho bạn bè
     const applyPresence = (userId: string, online: boolean) => {
       setConversations((prev) =>
         prev.map((conv) => ({
@@ -148,56 +128,59 @@ export default function MessagePage() {
       });
     };
 
-    socket.on("friendOnline", (payload: { userId: string }) => {
+    const onFriendOnline = (payload: { userId: string }) => {
       if (!payload?.userId) return;
       applyPresence(payload.userId, true);
-    });
-    socket.on("friendOffline", (payload: { userId: string }) => {
+    };
+    const onFriendOffline = (payload: { userId: string }) => {
       if (!payload?.userId) return;
       applyPresence(payload.userId, false);
-    });
+    };
 
-    // Nhận tin nhắn realtime
-    socket.on("receiveMessage", (message: Message) => {
-      // xử lý optimistic / append
-      setMessages((prev) => {
-        if (prev.some((m) => String(m._id) === String(message._id))) return prev;
-        const optIndex = prev.findIndex((m) =>
-          /^[0-9]+$/.test(String(m._id)) &&
-          String(m.conversationId) === String(message.conversationId) &&
-          m.content === message.content
-        );
-        if (optIndex !== -1) {
+    const onReceiveMessage = (message: Message) => {
+      const openConvId = selectedConvRef.current?._id ?? null;
+      if (String(openConvId) === String(message.conversationId)) {
+        setMessages((prev) => {
+          if (prev.some((m) => String(m._id) === String(message._id))) return prev;
+          const optIndex = prev.findIndex((m) =>
+            /^[0-9]+$/.test(String(m._id)) &&
+            String(m.conversationId) === String(message.conversationId) &&
+            m.content === message.content
+          );
           const next = [...prev];
-          next[optIndex] = message;
+          if (optIndex !== -1) {
+            next[optIndex] = message;
+          } else {
+            next.push(message);
+          }
           return next;
-        }
-        return [...prev, message];
-      });
-      setConversations((prev) =>
-        prev.map((c) =>
+        });
+      }
+
+      setConversations((prev) => {
+        const updated = prev.map((c) =>
           c._id === String(message.conversationId)
             ? { ...c, lastMessage: message.content ?? "", updatedAt: message.createdAt ?? new Date().toISOString() }
             : c
-        )
-      );
-    });
+        );
+        const idx = updated.findIndex((c) => c._id === String(message.conversationId));
+        if (idx === -1) return updated;
+        const conv = updated[idx];
+        const rest = updated.filter((_, i) => i !== idx);
+        return [conv, ...rest];
+      });
+    };
 
-    socket.on("newConversation", (conv: Conversation) => {
-      setConversations((prev) => [conv, ...prev]);
-    });
-
-    socket.on("connect_error", (err) => console.warn("Socket connect_error:", err));
+    socket.on("friendOnline", onFriendOnline);
+    socket.on("friendOffline", onFriendOffline);
+    socket.on("receiveMessage", onReceiveMessage);
 
     return () => {
-      socket.off("friendOnline");
-      socket.off("friendOffline");
-      socket.off("tokenExpired");
-      // không còn handler signaling
-      socket.disconnect();
-      socketRef.current = null;
+      socket.off("friendOnline", onFriendOnline);
+      socket.off("friendOffline", onFriendOffline);
+      socket.off("receiveMessage", onReceiveMessage);
     };
-  }, [currentUserId]);
+  }, [socket, currentUserId]);
 
   // Tải danh sách hội thoại cho user hiện tại
   useEffect(() => {
@@ -232,6 +215,12 @@ export default function MessagePage() {
         );
         // server trả về mảng messages
         const msgs: Message[] = res.data ?? [];
+        // sắp xếp oldest-first (thứ tự hiển thị: cũ -> mới) để tin nhắn cuối nằm dưới cùng
+        msgs.sort((a, b) => {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return ta - tb;
+        });
         setMessages(msgs);
       } catch (err) {
         console.error("Lỗi khi tải tin nhắn:", err);
@@ -246,8 +235,8 @@ export default function MessagePage() {
   // Tự cuộn xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+      // messages ordered oldest-first, cuộn xuống cuối (bottom) để thấy tin nhắn mới nhất
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages, selectedConv]);
 
@@ -257,6 +246,7 @@ export default function MessagePage() {
     style.innerHTML = `
 @keyframes fade-in-up { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
 .animate-fade-in-up { animation: fade-in-up 0.3s ease-out forwards; }
+.message-content { word-break: break-word; white-space: pre-wrap; font-family: 'Noto Color Emoji', 'Segoe UI Emoji', 'Apple Color Emoji', 'Segoe UI Symbol', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
 `;
     document.head.appendChild(style);
     return () => {
@@ -273,17 +263,55 @@ export default function MessagePage() {
     }
   };
 
+  // keep ref updated so socket handlers can see latest selected conversation
+  useEffect(() => {
+    selectedConvRef.current = selectedConv;
+  }, [selectedConv]);
+
+  const handleInitiateCall = async (callType: "audio" | "video") => {
+  console.log("handleInitiateCall:", {
+    callType,
+    conv: selectedConv?._id,
+    currentUserId,
+  });
+
+  if (!selectedConv || !initiateCall) {
+    console.warn("❌ Cannot initiate call");
+    return;
+  }
+
+  // Lấy user còn lại trong cuộc chat
+  const other = selectedConv.participants.find(
+    (p) => p._id !== currentUserId
+  );
+
+  if (!other) {
+    console.warn("❌ No other user in conversation");
+    return;
+  }
+
+  console.log("📞 Gọi tới:", other._id);
+
+  try {
+    await initiateCall(String(other._id), callType);
+    console.log("✅ Call initiated");
+  } catch (err) {
+    console.error("❌ Lỗi gọi:", err);
+  }
+};
+
+
   const handleSendMessage = async () => {
     if (!selectedConv) return;
     if (!newMessage.trim()) return;
 
     try {
       // Ưu tiên gửi qua socket nếu có kết nối; server vẫn lưu và emit lại
-      const socket = socketRef.current;
+      const socketInst = socket;
       const other = selectedConv.participants.find((p) => p._id !== currentUserId);
       const receiverId = other?._id;
-      if (socket && socket.connected) {
-        socket.emit("sendMessage", { receiverId, content: newMessage.trim(), conversationId: selectedConv._id });
+      if (socketInst && socketInst.connected) {
+        socketInst.emit("sendMessage", { receiverId, content: newMessage.trim(), conversationId: selectedConv._id });
         // optimistic UI
         const optimistic: Message = {
           _id: Date.now().toString(),
@@ -292,12 +320,19 @@ export default function MessagePage() {
           content: newMessage.trim(),
           createdAt: new Date().toISOString(),
         };
+        // chèn optimistic (append to end) so newest is at bottom
         setMessages((prev) => [...prev, optimistic]);
-        setConversations((prevConvs) =>
-          prevConvs.map((c) =>
+        setConversations((prevConvs) => {
+          const updated = prevConvs.map((c) =>
             c._id === selectedConv._id ? { ...c, lastMessage: optimistic.content, updatedAt: optimistic.createdAt } : c
-          )
-        );
+          );
+          // đưa conversation này lên đầu
+          const idx = updated.findIndex((c) => c._id === selectedConv._id);
+          if (idx === -1) return updated;
+          const conv = updated[idx];
+          const rest = updated.filter((_, i) => i !== idx);
+          return [conv, ...rest];
+        });
         setNewMessage("");
       } else {
         // fallback HTTP (server vẫn lưu và emit)
@@ -305,11 +340,16 @@ export default function MessagePage() {
         const created: Message | undefined = res.data?.data;
         if (created) {
           setMessages((prev) => [...prev, created]);
-          setConversations((prevConvs) =>
-            prevConvs.map((c) =>
+          setConversations((prevConvs) => {
+            const updated = prevConvs.map((c) =>
               c._id === selectedConv._id ? { ...c, lastMessage: created.content, updatedAt: created.createdAt } : c
-            )
-          );
+            );
+            const idx = updated.findIndex((c) => c._id === selectedConv._id);
+            if (idx === -1) return updated;
+            const conv = updated[idx];
+            const rest = updated.filter((_, i) => i !== idx);
+            return [conv, ...rest];
+          });
         }
         setNewMessage("");
       }
@@ -319,7 +359,7 @@ export default function MessagePage() {
   };
 
   // Danh sách emoji mẫu
-  const EMOJIS = ["😊", "😂", "😍", "👍", "🎉", "😢", "🔥", "❤️"];
+  const EMOJIS = ["🙂", "😀", "😍", "👍", "🎉", "😢", "🔥", "❤️", "🤥","🤧", "👿"];
   const toggleEmojiPicker = () => setShowEmojiPicker((s) => !s);
   const addEmoji = (e: string) => {
     setNewMessage((prev) => prev + e);
@@ -396,67 +436,14 @@ export default function MessagePage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {conversations
-            .filter((c) => {
-              const other = getOtherParticipant(c);
-              return (
-                other?.fullname
-                  ?.toLowerCase()
-                  .includes(searchQuery.toLowerCase()) ||
-                other?.email?.toLowerCase().includes(searchQuery.toLowerCase())
-              );
-            })
-            .map((conv) => {
-              const other = getOtherParticipant(conv);
-              const isSelected = selectedConv?._id === conv._id;
-              return (
-                <div
-                  key={conv._id}
-                  onClick={() => handleSelectConversation(conv)}
-                  className={`flex items-center gap-4 p-3 m-2 cursor-pointer rounded-lg transition-colors ${isSelected ? "bg-indigo-500 text-white" : "hover:bg-slate-100"
-                    }`}
-                >
-                  <div className="relative">
-                    <img
-                      src={
-                        other?.avatar ??
-                        `https://placehold.co/100x100/ccc/fff?text=${(
-                          other?.fullname ?? other?.email ?? "U"
-                        ).slice(0, 1)}`
-                      }
-                      alt={other?.fullname ?? other?.email}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <span
-                      className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-white ${other?.online ? "bg-green-500" : "bg-gray-300"}`}
-                    ></span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-semibold text-sm truncate">
-                        {other?.fullname ?? other?.email}
-                      </h3>
-                      <span
-                        className={`text-xs ${isSelected ? "text-indigo-200" : "text-slate-400"
-                          }`}
-                      >
-                        {formatTimestamp(conv.updatedAt)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <p
-                        className={`text-sm truncate ${isSelected ? "text-indigo-100" : "text-slate-500"
-                          }`}
-                      >
-                        {conv.lastMessage ?? ""}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
+        <ConversationList
+          conversations={conversations}
+          currentUserId={currentUserId}
+          searchQuery={searchQuery}
+          onSelect={handleSelectConversation}
+          selectedConvId={selectedConv?._id}
+          formatTimestamp={formatTimestamp}
+        />
       </aside>
 
       {/* Cửa sổ chat chính */}
@@ -497,10 +484,10 @@ export default function MessagePage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors" title="Gọi thoại">
+            <button onClick={() => handleInitiateCall("audio")} className="p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors" title="Gọi thoại">
               <Phone className="w-5 h-5" />
             </button>
-            <button className="p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors" title="Gọi video">
+            <button onClick={() => handleInitiateCall("video")} className="p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors" title="Gọi video">
               <Video className="w-5 h-5" />
             </button>
             <button className="p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors">
@@ -519,90 +506,11 @@ export default function MessagePage() {
             </div>
           )}
           <div className="space-y-5">
-            {messages.map((message) => {
-              const senderIsMe =
-                (typeof message.senderId === "string"
-                  ? message.senderId
-                  : (message.senderId as User)._id) === currentUserId;
-              const sender =
-                typeof message.senderId === "string"
-                  ? undefined
-                  : (message.senderId as User);
-              return (
-                <div
-                  key={message._id}
-                  className={`flex items-end gap-3 ${senderIsMe ? "flex-row-reverse" : "flex-row"
-                    } animate-fade-in-up`}
-                >
-                  {!senderIsMe && (
-                    <img
-                      src={
-                        sender?.avatar ?? `https://placehold.co/54x54/ccc/fff?text=${(
-                          sender?.fullname ?? "U"
-                        ).slice(0, 1)}`
-                      }
-                      alt="Avatar"
-                      className="w-8 h-8 rounded-full"
-                    />
-                  )}
-                  <div
-                    className={`max-w-[70%] lg:max-w-[60%] px-4 py-2.5 rounded-2xl shadow-sm ${senderIsMe
-                        ? "bg-indigo-600 text-white rounded-br-none"
-                        : "bg-white text-slate-800 rounded-bl-none"
-                      }`}
-                  >
-                    {message.content && <p className="text-sm">{message.content}</p>}
-                    <p
-                      className={`text-xs mt-1 text-right ${senderIsMe ? "text-indigo-200" : "text-slate-400"
-                        }`}
-                    >
-                      {formatTimestamp(message.createdAt)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+            <MessageList messages={messages} currentUserId={currentUserId} formatTimestamp={formatTimestamp} />
           </div>
         </div>
 
-        <footer className="p-4 border-t border-slate-200 bg-white">
-          <div className="flex items-center gap-2 relative">
-            {/* Nút emoji + popover emoji */}
-            <div className="relative">
-              <button
-                onClick={toggleEmojiPicker}
-                className="p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors"
-              >
-                <Smile className="w-5 h-5" />
-              </button>
-              {showEmojiPicker && (
-                <div className="absolute bottom-12 left-0 bg-white border rounded-md shadow-md p-2 grid grid-cols-4 gap-2 z-20">
-                  {EMOJIS.map((e) => (
-                    <button key={e} onClick={() => addEmoji(e)} className="p-1 text-lg">
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <input
-              type="text"
-              placeholder="Nhập tin nhắn..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              className="flex-1 w-full px-4 py-2 bg-slate-100 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <button
-              onClick={handleSendMessage}
-              className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-50"
-              disabled={!newMessage.trim()}
-            >
-              {/* gán màu trắng cho icon gửi */}
-              <Send className="w-5 h-5" color="blue" />
-            </button>
-          </div>
-        </footer>
+        <MessageInput newMessage={newMessage} setNewMessage={setNewMessage} onSend={handleSendMessage} showEmojiPicker={showEmojiPicker} toggleEmojiPicker={toggleEmojiPicker} emojis={EMOJIS} addEmoji={addEmoji} />
       </main>
     </div>
   );

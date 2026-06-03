@@ -25,7 +25,7 @@ const initialPosts: Post[] = [
     likes: 124,
     commentCount: 8,
     isLiked: false,
-    time: "2 giờ trước",
+    created_at: "2 giờ trước",
   },
 
 ]
@@ -37,7 +37,7 @@ const initialComments: Record<string, Comment[]> = {
       userID: "user2",
       fullname: "tranthibinh",
       text: "Đẹp quá!",
-      time: "1 giờ trước",
+      created_at: "1 giờ trước",
       likes: 1,
       isLiked: true,
       replies: [
@@ -46,7 +46,7 @@ const initialComments: Record<string, Comment[]> = {
           userID: "user1",
           fullname: "nguyenvanan",
           text: "Cảm ơn bạn!",
-          time: "45 phút trước",
+          created_at: "45 phút trước",
           likes: 1,
           isLiked: true,
           parentId: "c1",
@@ -76,7 +76,7 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
           Authorization: `Bearer ${token}`,
         },
       });
-
+      
       const data: Post[] = response.data.data;
       setPosts(data);
     } catch (err) {
@@ -107,7 +107,13 @@ export function PostProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       [postId]: [...(prev[postId] || []), commentWithReplies],
     }))
-    fetchPosts()
+    setPosts((prevPosts) => 
+        prevPosts.map((post) => 
+            post.id === postId 
+                ? { ...post, commentCount: (post.commentCount || 0) + 1 } 
+                : post
+        )
+    );
   }
 
   const addReply = (postId: string, parentCommentId: string, reply: Comment) => {

@@ -1,0 +1,74 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docker Services",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "focus": true,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Client (npm run dev)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "dependsOn": "Docker Services",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Server (npm run dev)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "dependsOn": "Docker Services",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Recommend System",
+      "type": "shell",
+      "command": "python -u \"p:\\React\\SocialMedia\\recommendSystem\\recommendSystem.py\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "dependsOn": "Docker Services",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "START ALL PROJECT SERVICES",
+      "dependsOn": [
+        "Docker Services",
+        "Client (npm run dev)",
+        "Server (npm run dev)",
+        "Recommend System"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

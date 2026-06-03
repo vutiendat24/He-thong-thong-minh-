@@ -1,4 +1,4 @@
-"use client"
+ 
 
 import type React from "react"
 import type { ApiResponse } from "../../../../fomat/APIfomat"
@@ -61,7 +61,7 @@ export default function ProfilePage() {
         return res.data.imageUrl; // URL lay tu  Cloudinary tra ve 
     };
     const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        console.log("doi avatar")
+        
         const file = event.target.files?.[0]
         if (!file) return
 
@@ -71,7 +71,6 @@ export default function ProfilePage() {
             // Bước 1: Upload lên Cloudinary
             console.log("Uploading to Cloudinary...")
             const imgURL = await uploadToCloudinary(file);
-            console.log("Cloudinary URL:", imgURL)
 
             // Bước 2: Cập nhật avatar trong database
             const token = localStorage.getItem("token")
@@ -130,7 +129,7 @@ export default function ProfilePage() {
                     handleTokenExpired()
                 }
                 setIsFollowing(false)
-                setPersonalInfo((prev) => (prev ? { ...prev, totalFolower: (prev.totalFolower || 0) - 1 } : null))
+                setPersonalInfo((prev) => (prev ? { ...prev, totalFolower: (prev.totalFollower || 0) - 1 } : null))
             } else {
                 const res = await axios.post(
                     `http://localhost:3000/melody/profile/follow/${userID}`,
@@ -145,7 +144,7 @@ export default function ProfilePage() {
                     handleTokenExpired()
                 }
                 setIsFollowing(true)
-                setPersonalInfo((prev) => (prev ? { ...prev, totalFolower: (prev.totalFolower || 0) + 1 } : null))
+                setPersonalInfo((prev) => (prev ? { ...prev, totalFolower: (prev.totalFollower || 0) + 1 } : null))
             }
         } catch (error) {
             console.error("Error toggling follow:", error)
@@ -200,7 +199,7 @@ export default function ProfilePage() {
 
         getPosts()
         getUserInfo()
-    }, [refresh])
+    }, [userID,refresh])
 
     return (
         <>
@@ -266,12 +265,12 @@ export default function ProfilePage() {
                                         {isFollowing ? (
                                             <>
                                                 <UserMinus className="h-4 w-4 text-blue-700" />
-                                                <p> Hủy kết bạn  </p>
+                                                <p className="!text-blue-700" > Đang theo dõi </p>
                                             </>
                                         ) : (
                                             <>
                                                 <UserPlus className="h-4 w-4 text-red-700" />
-                                                Thêm bạn
+                                                Theo dõi
                                             </>
                                         )}
                                     </Button>
@@ -282,10 +281,10 @@ export default function ProfilePage() {
                                     <strong>{posts.length}</strong> bài viết
                                 </span>
                                 <span>
-                                    <strong>{personalInfo?.totalFolower || 0}</strong> người theo dõi
+                                    <strong>{personalInfo?.totalFollower || 0}</strong> người theo dõi
                                 </span>
                                 <span>
-                                    <strong>{personalInfo?.totalFolowing || 0}</strong> đang theo dõi
+                                    <strong>{personalInfo?.totalFollowing || 0}</strong> đang theo dõi
                                 </span>
                             </div>
                         </div>

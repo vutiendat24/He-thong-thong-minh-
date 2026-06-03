@@ -58,6 +58,22 @@ const ErrorCode = {
   UPDATE_PROFILE_ERROR : {
     status: 500,
     message: "CAN NOT UPDATE PROFILE DUE TO SERVER ERROR"
+  },
+  GET_PROFILE_ERROR : {
+    status: 500,
+    message: "ERORR WHEN GET PERSONAL PROFILE"
+  },
+  FOLLOW_ERROR : {
+    status: 500,
+    message: "ERROR WHEN YOU FOLLOW"
+  },
+  UN_FOLLOW_ERROR : {
+    status: 500,
+    message: "ERROR WHEN YOU UNFOLLOW"
+  },
+  SUGGEST_FRIEND_ERROR : {
+    status: 500,
+    message: "ERROR WHEN YOU GET SUGGEST FRIEND"
   }
 
 

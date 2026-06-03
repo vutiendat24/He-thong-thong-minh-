@@ -1,12 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { NotificationData } from '@/fomat/type/Notification';
-import { useSocket } from '@/hooks/useSocket';
 import { useSocketContext } from './SocketContext';
-
-
-
-
-
+import axios from 'axios';
 
 interface NotificationContextType {
   notifications: NotificationData[];
@@ -18,58 +14,10 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<NotificationData[]>([
-    {
-      id: '1',
-      type: 'like',
-      senderId: 'user2',
-      senderName: 'Nguyễn Văn A',
-      senderAvatar: 'https://i.pravatar.cc/150?img=1',
-      postId: 'post1',
-      postImage: 'https://picsum.photos/400/400?random=1',
-      message: 'đã thích bài viết của bạn',
-      isRead: false,
-      createdAt: new Date(Date.now() - 5 * 60000).toISOString(),
-    },
-    {
-      id: '2',
-      type: 'comment',
-      senderId: 'user3',
-      senderName: 'Trần Thị B',
-      senderAvatar: 'https://i.pravatar.cc/150?img=2',
-      postId: 'post1',
-      postImage: 'https://picsum.photos/400/400?random=1',
-      commentId: 'comment1',
-      message: 'đã bình luận về bài viết của bạn',
-      commentContent: 'Bài viết rất hay! 🔥',
-      isRead: false,
-      createdAt: new Date(Date.now() - 15 * 60000).toISOString(),
-    },
-    {
-      id: '3',
-      type: 'follow',
-      senderId: 'user4',
-      senderName: 'Lê Văn C',
-      senderAvatar: 'https://i.pravatar.cc/150?img=3',
-      message: 'đã bắt đầu theo dõi bạn',
-      isRead: true,
-      createdAt: new Date(Date.now() - 60 * 60000).toISOString(),
-    },
-    {
-      id: '4',
-      type: 'comment',
-      senderId: 'user5',
-      senderName: 'Phạm Thị D',
-      senderAvatar: 'https://i.pravatar.cc/150?img=4',
-      postId: 'post2',
-      postImage: 'https://picsum.photos/400/400?random=2',
-      commentId: 'comment2',
-      message: 'đã bình luận về bài viết của bạn',
-      commentContent: 'Chụp ảnh đẹp quá 📸',
-      isRead: false,
-      createdAt: new Date(Date.now() - 2 * 60 * 60000).toISOString(),
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const { socket } = useSocketContext();
+
+  const baseURL = "http://localhost:3000/melody/notify";
 
   const addNotification = (notification: NotificationData) => {
     setNotifications(prev => [notification, ...prev]);
@@ -81,26 +29,45 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     );
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const fetchNotifyData = async () => {
+    try {
+      const res = await axios.get(`${baseURL}/getNotifications`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-  const {socket} = useSocketContext()
+      if (res.status === 200) {
+        setNotifications(res.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  // chay 1 lan de lay cac thong bao trong db
+  // cac lan sau khi co thong bao moi se duoc cap nhat thong qua socket
+  useEffect(()=>{
+    fetchNotifyData();
+  }, [])
+
 
   useEffect(() => {
-    if (!socket) return; // socket chưa sẵn sàng
-    console.log("Listening to socket for notifications...");
-
+    if (!socket) return;
+    // Handle realtime notification
     const handleNotification = (data: NotificationData) => {
+      console.log("📩 Client RECEIVED realtime notify:", data);
       addNotification(data);
     };
 
     socket.on("new-notification", handleNotification);
 
+    // Cleanup
     return () => {
       socket.off("new-notification", handleNotification);
     };
-  }, [socket]); // chạy lại khi socket thay đổi
-  
-
+  }, [socket]);
 
   return (
     <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, addNotification }}>
@@ -114,16 +81,3 @@ export const useNotification = () => {
   if (!context) throw new Error('useNotification must be used within NotificationProvider');
   return context;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-

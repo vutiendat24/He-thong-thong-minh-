@@ -4,10 +4,10 @@ const ErrorCode = require("./ErrorCode")
 
 
 
-const ErrorAPI = (errorCode) => {
+const ErrorAPI = (mesage,errorCode) => {
   const error = ErrorCode[errorCode] || {};
   const status = error.status || 400;
-  const message = error.message || "Cannot find error code";
+  const message = mesage|| "Cannot find error code";
 
   return {
     success: false,
@@ -22,7 +22,7 @@ const SuccesAPI = (message, data) => {
     success: true,
     message: message,
     status: 200,
-    data: data
+    data: data || null
   };
 };
 

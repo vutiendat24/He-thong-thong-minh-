@@ -44,7 +44,8 @@ const syncUsersToNeo4j = async () => {
           u.email = $email,
           u.avatar = $avatar,
           u.birthday = $birthday,
-          u.createdAt = $createdAt
+          u.createdAt = $createdAt,
+          u.totalFollower = $totalFollower
         `,
         {
           id: user._id.toString(),
@@ -53,6 +54,7 @@ const syncUsersToNeo4j = async () => {
           avatar: user.avatar || "",
           birthday: user.birthday ? user.birthday.toISOString() : null,
           createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+          totalFollower: user.totalFollower ? neo4j.int(user.totalFollower) : 0,
         }
       );
     }

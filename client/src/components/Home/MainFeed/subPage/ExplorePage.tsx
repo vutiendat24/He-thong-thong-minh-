@@ -4,61 +4,61 @@ import type Post from "../../../../fomat/type/Post"
 import { usePostContext } from "../../../../context/PostContext"
 import axios, { AxiosError } from 'axios';
 
-const exploreItemsInit = [
-  {
-    "id": "68e62d8b53fdebb5154c1d10",
-    "userID": "68e625fd737a630e4d6d6656",
-    "fullname": "Vu Tien Dat",
-    "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759915403/popwoglhpnuug7oqyn86.png",
-    "caption": "sadasd",
-    "likes": 0,
-    "commentCount": 0,
-    "isLiked": false,
-    "time": "2 giờ trước",
-    "privacy": "public"
-  },
-  {
-    "id": "68e62adfffb358fbacc76f88",
-    "userID": "68e625fd737a630e4d6d6656",
-    "fullname": "Vu Tien Dat",
-    "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759914719/a3gagng8amnxhklxlslj.png",
-    "caption": "sss",
-    "likes": 0,
-    "commentCount": 0,
-    "isLiked": false,
-    "time": "2 giờ trước",
-    "privacy": "public"
-  },
-  {
-    "id": "68e62a8c1e6a7cc6edce63ff",
-    "userID": "68e6230de6a74cdcadc88bcc",
-    "fullname": "Ẩn danh",
-    "avatar": "",
-    "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759914635/dbngxumvmzgxe95bilny.png",
-    "caption": "ssdd",
-    "likes": 0,
-    "commentCount": 0,
-    "isLiked": false,
-    "time": "2 giờ trước",
-    "privacy": "public"
-  },
-  {
-    "id": "68e62615737a630e4d6d665d",
-    "userID": "68e6230de6a74cdcadc88bcc",
-    "fullname": "Ẩn danh",
-    "avatar": "",
-    "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759913492/njwouuyii00xotfqiugx.png",
-    "caption": "asasa",
-    "likes": 0,
-    "commentCount": 0,
-    "isLiked": false,
-    "time": "2 giờ trước",
-    "privacy": "public"
-  }
-]
+// const exploreItemsInit = [
+//   {
+//     "id": "68e62d8b53fdebb5154c1d10",
+//     "userID": "68e625fd737a630e4d6d6656",
+//     "fullname": "Vu Tien Dat",
+//     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759915403/popwoglhpnuug7oqyn86.png",
+//     "caption": "sadasd",
+//     "likes": 0,
+//     "commentCount": 0,
+//     "isLiked": false,
+//     "created_at": "2 giờ trước",
+//     "privacy": "public"
+//   },
+//   {
+//     "id": "68e62adfffb358fbacc76f88",
+//     "userID": "68e625fd737a630e4d6d6656",
+//     "fullname": "Vu Tien Dat",
+//     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759914719/a3gagng8amnxhklxlslj.png",
+//     "caption": "sss",
+//     "likes": 0,
+//     "commentCount": 0,
+//     "isLiked": false,
+//     "created_at": "2 giờ trước",
+//     "privacy": "public"
+//   },
+//   {
+//     "id": "68e62a8c1e6a7cc6edce63ff",
+//     "userID": "68e6230de6a74cdcadc88bcc",
+//     "fullname": "Ẩn danh",
+//     "avatar": "",
+//     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759914635/dbngxumvmzgxe95bilny.png",
+//     "caption": "ssdd",
+//     "likes": 0,
+//     "commentCount": 0,
+//     "isLiked": false,
+//     "created_at": "2 giờ trước",
+//     "privacy": "public"
+//   },
+//   {
+//     "id": "68e62615737a630e4d6d665d",
+//     "userID": "68e6230de6a74cdcadc88bcc",
+//     "fullname": "Ẩn danh",
+//     "avatar": "",
+//     "image": "https://res.cloudinary.com/dsfgzdr5z/image/upload/v1759913492/njwouuyii00xotfqiugx.png",
+//     "caption": "asasa",
+//     "likes": 0,
+//     "commentCount": 0,
+//     "isLiked": false,
+//     "created_at": "2 giờ trước",
+//     "privacy": "public"
+//   }
+// ]
 export default function ExplorePage() {
   const { posts, getPostById, addComment, handleTokenExpired, updateLikePost } = usePostContext()
-  const [exploreItems, setExploreItems] = useState<Post[]>(exploreItemsInit || [])
+  const [exploreItems, setExploreItems] = useState<Post[]>( [])
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
 

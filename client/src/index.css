@@ -77,11 +77,11 @@ h1 {
 button {
   border-radius: 8px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 0.6em 0.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  /* background-color: #1a1a1a; */
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -101,9 +101,9 @@ button:focus-visible {
   a:hover {
     color: #747bff;
   }
-  button {
+  /* button {
     background-color: #f9f9f9;
-  }
+  } */
 }
 
 @theme inline {
@@ -184,5 +184,108 @@ button:focus-visible {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations for call components */
+@keyframes ring-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes call-connect {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes video-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes control-slide-up {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ring-pulse {
+  animation: ring-pulse 2s ease-in-out infinite;
+}
+
+.call-connect {
+  animation: call-connect 0.5s ease-out;
+}
+
+.video-fade-in {
+  animation: video-fade-in 0.3s ease-out;
+}
+
+.control-slide-up {
+  animation: control-slide-up 0.4s ease-out;
+}
+
+/* Glass morphism effects */
+.glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Custom button hover effects */
+.call-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.call-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.call-button:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .call-overlay {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .call-window .control-bar {
+    padding: 1rem;
+  }
+
+  .call-window .pip-video {
+    width: 120px;
+    height: 90px;
+    bottom: 120px;
+    right: 1rem;
   }
 }

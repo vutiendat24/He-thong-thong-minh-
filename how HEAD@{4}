@@ -1,0 +1,12 @@
+[33m6c77f31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: checkout: moving from main to main
+[33m6c77f31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{1}: checkout: moving from main to main
+[33m6c77f31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{2}: checkout: moving from main to main
+[33m6c77f31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: checkout: moving from main to main
+[33m6c77f31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{4}: reset: moving to HEAD~1
+[33m636564b[m HEAD@{5}: checkout: moving from main to main
+[33m636564b[m HEAD@{6}: checkout: moving from Tri to main
+[33m2f8980a[m[33m ([m[1;31morigin/Tri[m[33m, [m[1;32mTri[m[33m)[m HEAD@{7}: checkout: moving from main to Tri
+[33m636564b[m HEAD@{8}: checkout: moving from Tri to main
+[33m2f8980a[m[33m ([m[1;31morigin/Tri[m[33m, [m[1;32mTri[m[33m)[m HEAD@{9}: checkout: moving from main to Tri
+[33m636564b[m HEAD@{10}: commit: update message, call, complete feature
+[33m6c77f31[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{11}: clone: from https://github.com/vutiendat24/He-thong-thong-minh-.git

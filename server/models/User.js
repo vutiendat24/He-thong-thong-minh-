@@ -11,7 +11,9 @@ const userSchema = new mongoose.Schema({
   totalFollower: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
   online: {    type: Boolean,    default: false  },
-  lastSeen: {    type: Date,    default: null  }
+  lastSeen: {    type: Date,    default: null  },
+  status: {    type: String,    default: null  },
+  role: {    type: String,    default: "USER"  }
 });
 
 module.exports = mongoose.model('User', userSchema);

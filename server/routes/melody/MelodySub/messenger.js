@@ -7,7 +7,7 @@ const mongoose = require("mongoose");
 
 const MessageRouter = express.Router();
 
-// --- Helper: lấy userId từ Authorization Bearer token (không xác thực chữ ký ở đây; khuyến nghị dùng jwt.verify trong production) ---
+// --- Helper: lấy userID từ Authorization Bearer token (không xác thực chữ ký ở đây; khuyến nghị dùng jwt.verify trong production) ---
 function getUserIdFromAuthHeader(req) {
 	try {
 		const auth = req.headers?.authorization || req.headers?.Authorization;
@@ -20,7 +20,7 @@ function getUserIdFromAuthHeader(req) {
 		const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
 		const json = Buffer.from(b64, "base64").toString("utf8");
 		const obj = JSON.parse(json);
-		return obj?.id ?? obj?._id ?? obj?.userId ?? obj?.userID ?? null;
+		return obj?.id ?? obj?._id ?? obj?.userID ?? obj?.userID ?? null;
 	} catch (e) {
 		return null;
 	}
@@ -29,10 +29,9 @@ function getUserIdFromAuthHeader(req) {
 // --- Lấy danh sách conversations của user hiện tại (lấy user từ token) ---
 MessageRouter.get("/conversations", async (req, res) => {
 	try {
-		const userId = getUserIdFromAuthHeader(req);
-		// const userId = "68e68f7d66b17e22175b8a23"
-		if (!userId) return res.status(401).json({ message: "Unauthorized" });
-		const conversations = await Conversation.find({ participants: userId })
+		const userID = getUserIdFromAuthHeader(req);
+		if (!userID) return res.status(401).json({ message: "Unauthorized" });
+		const conversations = await Conversation.find({ participants: userID })
 			.populate("participants", "_id fullname email avatar online")
 			.sort({ updatedAt: -1 });
 		return res.status(200).json({ success: true, count: conversations.length, data: conversations });
@@ -44,29 +43,29 @@ MessageRouter.get("/conversations", async (req, res) => {
 
 // --- Tạo conversation giữa user hiện tại (từ token) và otherId (param) ---
 MessageRouter.post("/conversation/:otherId", async (req, res) => {
-	const userId1 = getUserIdFromAuthHeader(req);
+	const userID1 = getUserIdFromAuthHeader(req);
 	const session = driver.session();
-	const userId2 = req.params.otherId;
-	if (!userId1) return res.status(401).json({ message: "Unauthorized" });
+	const userID2 = req.params.otherId;
+	if (!userID1) return res.status(401).json({ message: "Unauthorized" });
 
 	try {
-		if (!mongoose.Types.ObjectId.isValid(userId2)) {
+		if (!mongoose.Types.ObjectId.isValid(userID2)) {
 			return res.status(400).json({ message: "ID người dùng không hợp lệ" });
 		}
 
 		const checkFriendship = await session.run(
 			`
-      MATCH (u1:User {id: $userId1})-[r:FRIEND_WITH]-(u2:User {id: $userId2})
+      MATCH (u1:User {id: $userID1})-[r:FRIEND_WITH]-(u2:User {id: $userID2})
       RETURN COUNT(r) AS count
       `,
-			{ userId1, userId2 }
+			{ userID1, userID2 }
 		);
 		const countRecord = checkFriendship.records[0]?.get("count");
 		const isFriend = countRecord ? countRecord.toNumber() > 0 : false;
 
 		// tìm hoặc tạo conversation (tạo ObjectId bằng new)
-		const p1 = new mongoose.Types.ObjectId(String(userId1));
-		const p2 = new mongoose.Types.ObjectId(String(userId2));
+		const p1 = new mongoose.Types.ObjectId(String(userID1));
+		const p2 = new mongoose.Types.ObjectId(String(userID2));
 		let conversation = await Conversation.findOne({ participants: { $all: [p1, p2] } });
 		if (!conversation) {
 			conversation = new Conversation({ participants: [p1, p2] });
@@ -77,12 +76,12 @@ MessageRouter.post("/conversation/:otherId", async (req, res) => {
 		if (!isFriend) {
 			await session.run(
 				`
-        MERGE (u1:User {id: $userId1})
-        MERGE (u2:User {id: $userId2})
+        MERGE (u1:User {id: $userID1})
+        MERGE (u2:User {id: $userID2})
         MERGE (u1)-[:FRIEND_WITH]->(u2)
         MERGE (u2)-[:FRIEND_WITH]->(u1)
         `,
-				{ userId1, userId2 }
+				{ userID1, userID2 }
 			);
 		}
 
@@ -137,11 +136,11 @@ MessageRouter.post("/message", async (req, res) => {
 	}
 });
 
-// --- Lấy danh sách conversation cho userId (cũ) vẫn giữ để tương thích ---
-MessageRouter.get("/conversations/:userId", async (req, res) => {
+// --- Lấy danh sách conversation cho userID (cũ) vẫn giữ để tương thích ---
+MessageRouter.get("/conversations/:userID", async (req, res) => {
 	try {
-		const { userId } = req.params;
-		const conversations = await Conversation.find({ participants: userId })
+		const { userID } = req.params;
+		const conversations = await Conversation.find({ participants: userID })
 			.populate("participants", "_id fullname email avatar")
 			.sort({ updatedAt: -1 });
 		if (!conversations.length) return res.status(200).json({ success: true, message: "Không có cuộc hội thoại nào.", data: [] });
@@ -167,6 +166,23 @@ MessageRouter.get("/messages/:conversationId", async (req, res) => {
 	} catch (error) {
 		console.error("❌ Lỗi khi lấy tin nhắn:", error);
 		res.status(500).json({ message: "Lỗi server" });
+	}
+});
+
+// --- Lấy danh sách users (for testing calls) ---
+MessageRouter.get("/users", async (req, res) => {
+	try {
+		const users = await User.find({})
+			.select("_id fullname email avatar online")
+			.limit(20); // Limit to prevent too many results
+		return res.status(200).json({
+			success: true,
+			count: users.length,
+			data: users
+		});
+	} catch (err) {
+		console.error("❌ Lỗi lấy danh sách users:", err);
+		res.status(500).json({ error: "Lỗi server", details: err.message });
 	}
 });
 

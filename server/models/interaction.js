@@ -8,7 +8,7 @@ const interactionSchema = new mongoose.Schema({
         index: true  // Index để query nhanh
     },
     
-   
+    dwell_time : {type: Number},
     userID: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -43,37 +43,10 @@ const interactionSchema = new mongoose.Schema({
         default: Date.now,
         index: true  // Index để query theo thời gian
     },
-    
-    // Data chi tiết của event (flexible)
-    data: {
-        type: mongoose.Schema.Types.Mixed,
-        required: true
-    },
-    
-    // Thông tin device/browser
-    userAgent: {
-        type: String,
-        required: true
-    },
-    
-    screenResolution: {
-        type: String,
-        required: true
-    },
-    
-    viewportSize: {
-        type: String,
-        required: true
-    },
-    
-    
-    
-    
+    postId: {type: String},
+    target_userID: {type: String }, 
     // Soft delete
-    isDeleted: {
-        type: Boolean,
-        default: false
-    }
+    isDeleted: { type: Boolean,default: false }
 }, {
     timestamps: true  // Tự động tạo createdAt, updatedAt
 });

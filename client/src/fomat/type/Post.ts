@@ -6,10 +6,10 @@ export default interface Post {
   userID: string
   fullname: string
   avatar?: string
-  image: string
+  image?: string
   caption?: string
   likes: number
   commentCount: number
   isLiked: boolean
-  time: string
+  created_at: string
 }
